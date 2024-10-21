@@ -10,5 +10,7 @@ data class UserCredentials(
 
 @Serializable
 data class LoginResponse(
-    val token: String
+    val token: String,
+    // expiration date in milliseconds
+    val expiresIn: Long
 )

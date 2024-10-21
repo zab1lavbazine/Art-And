@@ -1,42 +1,80 @@
 package art.example.api.repository.impl
 
-import art.example.api.data.Post
+import android.util.Log
+import art.example.api.data.*
 import art.example.api.repository.IPostApiService
 import art.example.api.service.PostApiService
+import art.example.database.*
+import art.example.database.PostDao.PostDao
+import art.example.database.TagDao.TagDao
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-
-// Repository for fetching posts data
 class PostRepository(
-    private val postApiService: PostApiService // Dependency injected PostApiService
-): IPostApiService {
+    private val postApiService: PostApiService, // API Service
+    private val postDao: PostDao, // Post DAO
+    private val tagDao: TagDao // Tag DAO
+) : IPostApiService {
 
-    // In-memory cache to store posts once loaded
+    // In-memory cache
     private val postsCache = mutableListOf<Post>()
 
-    // Static list of posts used as mock data
-    private val staticPosts = listOf(
-        Post(id = 1, title = "Post 1", description = "This is the first post.", imageUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRujbJkg9ZMrOOWIE0YovMK9L6zRwOGKKTOmw&s"),
-        Post(id = 2, title = "Post 2", description = "This is the second post.", imageUrl = "https://i.pinimg.com/236x/e6/aa/f8/e6aaf8816c655e914274937ea36dc103.jpg"),
-        Post(id = 3, title = "Post 3", description = "This is the third post.", imageUrl = "https://img.freepik.com/free-photo/majestic-mountain-peak-tranquil-winter-landscape-generated-by-ai_188544-15662.jpg")
-    )
-
-    // Function to get the list of posts
+    // Fetch all posts (from cache, database, or API)
     override suspend fun getPosts(): List<Post> {
-        // Return static data instead of making API calls
-        if (postsCache.isEmpty()) {
-            // Add static posts to cache
-            postsCache.addAll(staticPosts)
+        try {
+            if (postsCache.isEmpty()) {
+                val localPosts = withContext(Dispatchers.IO) { postDao.getAllPostsWithDetails() }
+                if (localPosts.isNotEmpty()) {
+                    postsCache.addAll(localPosts.map { it.toPost() })
+                } else {
+                    val apiPosts = postApiService.getPosts()
+                    postsCache.addAll(apiPosts)
+
+                    // Save posts and related data in the database
+                    withContext(Dispatchers.IO) {
+                        apiPosts.forEach { post ->
+                            savePost(post)
+                        }
+                    }
+                }
+            }
+            return postsCache
+        } catch (e: Exception) {
+            Log.e("PostRepository", "Error fetching posts: ${e.message}", e)
+            return emptyList()
         }
-        // Return the cached posts
-        return postsCache
     }
 
-    // Function to get a post by its ID
     override suspend fun getPostById(id: Long): Post? {
-        // First, check if the post is in the cache
-        val cachedPost = postsCache.find { it.id == id }
+        // Fetch a single post from cache or database
+        return postsCache.find { it.id == id } ?: withContext(Dispatchers.IO) {
+            postDao.getPostWithTags(id)?.toPost()
+        }
+    }
 
-        // If found in cache, return it, otherwise, return static data
-        return cachedPost ?: staticPosts.find { it.id == id }
+    // Save post, tags, and image into the database
+    suspend fun savePost(post: Post) {
+        withContext(Dispatchers.IO) {
+            try {
+                // Save the PostEntity
+                val postEntity = post.toPostEntity(userId = post.patron?.id ?: 0L)
+                postDao.insertPost(postEntity)
+
+                // Save the associated image if present
+                post.image?.let { image ->
+                    val imageEntity = image.toImageEntity(postId = post.id)
+                    postDao.insertImages(listOf(imageEntity))
+                }
+
+                // Save tags and create cross-references for the post
+                post.tags?.let { tags ->
+                    val tagEntities = tags.map { it.toTagEntity() }
+                    tagDao.insertTagsForPost(post.id, tagEntities)
+                }
+
+            } catch (e: Exception) {
+                Log.e("PostRepository", "Error saving post: ${e.message}", e)
+            }
+        }
     }
 }

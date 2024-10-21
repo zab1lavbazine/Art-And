@@ -1,5 +1,6 @@
 package art.example.api.data
 
+import art.example.database.ImageEntity
 import kotlinx.serialization.Serializable
 
 
@@ -26,4 +27,13 @@ data class Image(
         result = 31 * result + data.contentHashCode()
         return result
     }
+}
+
+
+fun Image.toImageEntity(postId: Long): ImageEntity {
+    return ImageEntity(
+        id = this.id,
+        data = data,
+        postId = postId  // Associate with the Post ID
+    )
 }

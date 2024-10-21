@@ -81,9 +81,7 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
 
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
-            isLoading = true
             userViewModel.login(username, password) { token ->
-                isLoading = false
                 onLoginSuccess(token) // Call the success callback
                 navController.navigate(Screen.PostsScreen.route) // Navigate to PostsScreen on successful login
             }

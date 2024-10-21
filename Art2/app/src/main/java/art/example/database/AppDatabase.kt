@@ -4,13 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import art.example.database.PostDao.PostDao
+import art.example.database.TagDao.TagDao
+import art.example.database.UserDao.UserDao
 
 @Database(
-    entities = [UserEntity::class, TagEntity::class, PostEntity::class],
-    version = 1 // Increment the version when making changes
+    entities = [UserEntity::class, TagEntity::class, PostEntity::class, ImageEntity::class],
+    version = 2 // Increment the version number
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
+    abstract fun postDao(): PostDao
+    abstract fun tagDao(): TagDao
     // Add other DAOs as needed (e.g., TagDao, PostDao)
 
     companion object {
@@ -23,7 +28,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database" // Name of the database
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

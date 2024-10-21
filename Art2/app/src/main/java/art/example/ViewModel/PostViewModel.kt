@@ -1,6 +1,7 @@
 package art.example.ViewModel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -31,6 +32,7 @@ class PostViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                Log.d("FLOW", "in the view model getting posts")
                 val fetchedPosts = postRepository.getPosts()
                 _posts.value = fetchedPosts
             } catch (e : Exception){

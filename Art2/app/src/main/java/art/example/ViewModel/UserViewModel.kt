@@ -1,5 +1,6 @@
 package art.example.ViewModel
 
+import art.example.api.repository.impl.UserRepository
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -8,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import art.example.api.data.User
 import art.example.api.reponses.UserCredentials
-import art.example.api.repository.impl.UserRepository
 import kotlinx.coroutines.launch
 
 class UserViewModel(

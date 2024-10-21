@@ -16,10 +16,13 @@ interface UserApiService {
     @GET("/api/users/{id}")
     suspend fun getUserById(): User?
 
-    @POST("/api/login")
+    @POST("/api/auth/login")
     suspend fun login(@Body credentials: UserCredentials): LoginResponse
 
-    @GET("/api/users/{username}")
-    suspend fun getUserByUsername(username: String): User?
+    @POST("/api/auth/register")
+    suspend fun register(@Body credentials: UserCredentials): LoginResponse
+
+    @GET("/api/users/account")
+    suspend fun getUserByUsername(): User?
 
 }

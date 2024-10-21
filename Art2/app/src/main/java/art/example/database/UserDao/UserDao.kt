@@ -1,9 +1,12 @@
-package art.example.database
+package art.example.database.UserDao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import art.example.database.PostEntity
+import art.example.database.TagEntity
+import art.example.database.UserEntity
 
 
 @Dao
