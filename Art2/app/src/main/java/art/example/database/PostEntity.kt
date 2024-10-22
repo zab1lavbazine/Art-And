@@ -7,86 +7,49 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import art.example.api.data.Post
-import art.example.api.data.Tag
 
 
 @Entity(
-    tableName = "posts", foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+    tableName = "posts",
 )
 data class PostEntity(
-    @PrimaryKey val id: Long,
+    @PrimaryKey val postId: Long,
     val title: String,
     val description: String,
-    val userId: Long // Foreign key referencing UserEntity
-)
-
-@Entity(
-    primaryKeys = ["postId", "tagId"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["postId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = TagEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["tagId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
-data class PostTagCrossRef(
-    val postId: Long,
-    val tagId: Long
 )
 
 
+@Entity(primaryKeys = ["tagId", "postId"])
 data class PostWithTags(
+    val tagId: Long,
+    val postId: Long
+)
+
+data class PostWithTagsAndImage(
     @Embedded val post: PostEntity,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(PostTagCrossRef::class)
+        parentColumn = "postId",
+        entityColumn = "id"
+    )
+    val images: List<ImageEntity>,
+    @Relation(
+        parentColumn = "postId",
+        entityColumn = "tagId",
+        associateBy = Junction(PostWithTags::class)
     )
     val tags: List<TagEntity>
-)
-
-fun PostWithTags.toPost(): Post {
-    return Post(
-        id = post.id,
-        title = post.title,
-        description = post.description,
-        tags = tags.map { tag -> Tag(id = tag.id, name = tag.name) }
-    )
+) {
+    // Convert to domain model Post
+    fun toPost(): Post {
+        return Post(
+            id = post.postId,
+            title = post.title,
+            description = post.description,
+            tags = tags.map { it.toTag() }, // Map TagEntity to Tag
+            image = images.firstOrNull()?.toImage() // Assuming only one image per post
+        )
+    }
 }
-
-
-fun Post.toPostEntityWithTags(userId: Long): Pair<PostEntity, List<TagEntity>> {
-    val postEntity = PostEntity(
-        id = id,
-        title = title,
-        description = description,
-        userId = userId
-    )
-
-    val tagEntities = tags?.map { tag ->
-        TagEntity(id = tag.id, name = tag.name)
-    } ?: emptyList()
-
-    return Pair(postEntity, tagEntities)
-}
-
-
-
 
 
 

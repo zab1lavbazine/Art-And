@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -47,12 +48,11 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun UserCard(user: User, onClick: () -> Unit) {
+fun UserCard(user: User) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clickable { onClick() },
+            .padding(16.dp),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -64,10 +64,12 @@ fun UserCard(user: User, onClick: () -> Unit) {
             Text(text = user.email, fontSize = 16.sp, color = Color.Gray)
 
             user.preferredTags?.let { tags ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
-                tags.forEach { tag ->
-                    Text(text = tag.name, fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
+                if (tags.isNotEmpty()){
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
+                    tags.forEach { tag ->
+                        TagBox(tag.name)
+                    }
                 }
             }
         }
@@ -124,10 +126,7 @@ fun MyProfile(navController: NavHostController) {
                 } else {
                     currentUser?.let { user ->
                         UserCard(
-                            user = user,
-                            onClick = {
-                                // Handle card click if needed
-                            }
+                            user = user
                         )
                     } ?: run {
                         Text(text = "User not found", modifier = Modifier.align(Alignment.Center))
@@ -163,18 +162,29 @@ fun MyProfile(navController: NavHostController) {
 
 @Composable
 fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
-    // Implement your user posts list UI here
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(1),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(8.dp)
-    ) {
-        items(usersPosts ?: emptyList()) { post ->
-            // Display each post in the grid
-            PostCard(post = post, onClick = {
-                // Navigate to post details when the post is clicked
-                navController.navigate(Screen.PostDetail.createRoute(post.id)) // Use the post ID to navigate
-            })
+
+    if (usersPosts.isNullOrEmpty()){
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            Text(text = "No Posts", fontSize = 20.sp, color = Color.Gray)
+        }
+    } else {
+        // Implement your user posts list UI here
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(1),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            items(usersPosts) { post ->
+                // Display each post in the grid
+                    PostCard(post = post, onClick = {
+                        // Navigate to post details when the post is clicked
+                        navController.navigate(Screen.PostDetail.createRoute(post.id)) // Use the post ID to navigate
+                    })
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.BottomNavigationBar
+import art.example.navigation.CreatePost
 import art.example.navigation.LoginScreen
 import art.example.navigation.MyBottomNavigationBar
 import art.example.navigation.MyProfile
@@ -58,6 +59,7 @@ fun MyApp() {
         composable(Screen.Login.route) { LoginScreen(navController, onLoginSuccess = onLoginSuccess) }
         composable(Screen.PostsScreen.route) { PostListScreen(navController) }
         composable(Screen.MyProfile.route) { MyProfile(navController) }
+        composable(Screen.CreatePost.route) { CreatePost(navController)}
         composable(
             Screen.PostDetail.route,
             arguments = listOf(navArgument("postId") { type = NavType.LongType })

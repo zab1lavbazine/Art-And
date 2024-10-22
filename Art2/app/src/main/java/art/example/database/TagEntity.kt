@@ -9,16 +9,19 @@ import art.example.api.data.Tag
 
 @Entity(tableName = "tags")
 data class TagEntity(
-    @PrimaryKey val id: Long,
+    @PrimaryKey val tagId: Long,
+    val userTagId: Long? = null,
     val name: String
 )
 
 
-
-
-fun Tag.toTagEntity(): TagEntity {
-    return TagEntity(
-        id = id,
+fun TagEntity.toTag(): Tag{
+    return Tag (
+        id = tagId,
         name = name
     )
 }
+
+
+
+

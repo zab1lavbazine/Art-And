@@ -3,8 +3,19 @@ package art.example.database
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import art.example.api.data.Image
 
-@Entity(tableName = "images")
+@Entity(
+    tableName = "images",
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["postId"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE // When a post is deleted, the associated image is also deleted
+        )
+    ]
+)
 data class ImageEntity(
     @PrimaryKey val id: Long,
     val postId: Long, // Foreign key referencing PostEntity
@@ -31,5 +42,15 @@ data class ImageEntity(
         result = 31 * result + postId.hashCode()
         result = 31 * result + (data?.contentHashCode() ?: 0)
         return result
+    }
+
+    fun toImage(): Image? {
+        return data?.let {
+            Image(
+                id = id,
+                data = it
+            )
+        }
+
     }
 }

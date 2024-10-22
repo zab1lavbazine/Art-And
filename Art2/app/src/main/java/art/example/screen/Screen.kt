@@ -7,4 +7,6 @@ sealed class Screen(val route: String) {
     object PostDetail : Screen("postDetail/{postId}") { // Ensure this is correct
         fun createRoute(postId: Long) = "postDetail/$postId"
     }
+
+    object CreatePost : Screen("posts/createPost")
 }

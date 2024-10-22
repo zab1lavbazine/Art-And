@@ -2,6 +2,7 @@ package com.example.arthub.api
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import art.example.api.service.PostApiService
 import art.example.api.service.TagApiService
 import art.example.api.service.UserApiService
@@ -34,9 +35,16 @@ object RetrofitInstance {
                 val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
                 val token = sharedPreferences.getString("auth_token", null)
 
+
+                val originalRequest = chain.request()
                 // Add the token to the request header if it exists
-                token?.let {
-                    requestBuilder.addHeader("Authorization", "Bearer $it")
+                if (token != null && !isAuthEndpoint(originalRequest.url.toString())) {
+                    Log.d("FLOW", "WITH TOKEN")
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+
+                if (chain.request().method == "POST") {
+                    requestBuilder.addHeader("Content-Type", "application/json")
                 }
 
                 chain.proceed(requestBuilder.build())
@@ -74,5 +82,9 @@ object RetrofitInstance {
             builder.addHeader("Authorization", "Bearer $authToken")
         }
         return builder.build()
+    }
+
+    private fun isAuthEndpoint(url: String): Boolean {
+        return url.contains("login", ignoreCase = true) || url.contains("register", ignoreCase = true)
     }
 }

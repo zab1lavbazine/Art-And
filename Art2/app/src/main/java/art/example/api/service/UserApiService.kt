@@ -6,6 +6,7 @@ import art.example.api.reponses.UserCredentials
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface UserApiService {
@@ -17,6 +18,7 @@ interface UserApiService {
     suspend fun getUserById(): User?
 
     @POST("/api/auth/login")
+    @Headers("Content-Type: application/json")
     suspend fun login(@Body credentials: UserCredentials): LoginResponse
 
     @POST("/api/auth/register")

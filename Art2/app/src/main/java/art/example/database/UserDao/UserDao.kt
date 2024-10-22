@@ -4,9 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import art.example.database.PostEntity
 import art.example.database.TagEntity
 import art.example.database.UserEntity
+import art.example.database.UserWithTags
 
 
 @Dao
@@ -18,20 +20,17 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTag(tag: TagEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPost(post: PostEntity)
-
+    // To get users with their tags
+    @Transaction
     @Query("SELECT * FROM users")
-    suspend fun getAllUsers(): List<UserEntity>
+    suspend fun getUsersWithTags(): List<UserWithTags>
 
-    @Query("SELECT * FROM users WHERE id = :userId")
+    // To get a specific user and their tags by ID
+    @Transaction
+    @Query("SELECT * FROM users WHERE userId = :userId")
+    suspend fun getUserByIdWithTags(userId: Long): UserWithTags?
+
+    // To get a specific user by ID
+    @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserById(userId: Long): UserEntity?
-
-    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
-    suspend fun getUserByUsername(username: String): UserEntity?
-
-//    @Query("SELECT * FROM users WHERE id = :userId")
-//    suspend fun getUserById(userId: Long): UserEntity?
-
-
 }

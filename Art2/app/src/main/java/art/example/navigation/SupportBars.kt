@@ -61,13 +61,16 @@ fun MyBottomNavigationBar(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     MyBottomNavigationBar(
-        items = listOf("Posts", "Favorites", "Profile"),
+        items = listOf("Posts", "New", "Profile"),
         currentRoute = navController.currentDestination?.route, // Get the current route as a string
         onItemSelected = { selectedItem ->
             when (selectedItem) {
                 "Posts" -> navController.navigate(Screen.PostsScreen.route) {
                     // Clear the back stack if needed
                     popUpTo(Screen.PostsScreen.route) { inclusive = true }
+                }
+                "New" -> navController.navigate(Screen.CreatePost.route){
+                    popUpTo(Screen.PostsScreen.route){ inclusive = true}
                 }
                 "Profile" -> navController.navigate(Screen.MyProfile.route) {
                     // Clear the back stack if needed

@@ -1,4 +1,5 @@
 [versions]
+accompanistSwiperefresh = "0.25.0"
 activityComposeVersion = "1.9.0"
 agp = "8.6.1"
 bom = "2024.04.01"
@@ -36,6 +37,7 @@ ui = "1.7.4"
 
 [libraries]
 #noinspection SimilarGradleDependency
+accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
 androidx-activity-compose-v190 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
 androidx-bom = { module = "androidx.compose:bom" }
 androidx-compose-material-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }

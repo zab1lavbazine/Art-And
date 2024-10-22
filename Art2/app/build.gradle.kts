@@ -88,6 +88,9 @@ dependencies {
 
     implementation(libs.coil.compose.v200)
 
+    implementation(libs.accompanist.swiperefresh) // for the swip update list of posts
+
+
 
     implementation(libs.androidx.compose.ui.ui)
     implementation(libs.ui.graphics)

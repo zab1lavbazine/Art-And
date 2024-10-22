@@ -9,8 +9,8 @@ import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
 
 @Database(
-    entities = [UserEntity::class, TagEntity::class, PostEntity::class, ImageEntity::class],
-    version = 2 // Increment the version number
+    entities = [UserEntity::class, TagEntity::class, PostEntity::class, ImageEntity::class, PostWithTags::class],
+    version = 3 // Increment the version number
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

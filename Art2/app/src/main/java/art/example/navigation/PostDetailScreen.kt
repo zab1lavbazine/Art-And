@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +37,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import art.example.ViewModel.PostViewModel
 import art.example.api.data.Post
+import art.example.api.data.Tag
 import coil.compose.rememberAsyncImagePainter
 
 import org.koin.androidx.compose.koinViewModel
@@ -157,8 +159,33 @@ fun PostCardItem(post: Post) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height((4.dp)))
+                Row(modifier = Modifier.fillMaxWidth()){
+                    post.tags?.forEach{ tag ->
+                        TagBox(tag.name)
+                    }
+                }
             }
         }
+    }
+}
+
+
+@Composable
+fun TagBox(tag: String) {
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .background(Color.LightGray, shape = MaterialTheme.shapes.small) // Light gray background with rounded corners
+            .padding(8.dp) // Padding inside the box
+    ) {
+        Text(
+            text = tag,
+            color = Color.Black,
+            fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

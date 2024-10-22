@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardElevation
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,11 +41,17 @@ import coil.compose.rememberImagePainter // Import Coil for image loading
 
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val viewModel: PostViewModel = koinViewModel()
     val posts by viewModel.posts.observeAsState(emptyList())
     val isLoading by viewModel.isLoading.observeAsState(true)
+
+    val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = {
+        viewModel.updatePosts() // Refresh posts
+    })
+
 
     LaunchedEffect(Unit) {
         viewModel.loadPost()
@@ -62,7 +71,11 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
         }
     ) { paddingValues ->
         // Add padding to account for top and bottom bars
-        Box(modifier = Modifier.padding(paddingValues)) {
+        Box (
+            modifier = Modifier
+                .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
+        ) {
             // Display a grid layout of posts
             if (!isLoading) {
                 LazyVerticalGrid(

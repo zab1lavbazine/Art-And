@@ -12,10 +12,9 @@ data class Tag(
 
 
 //to tag
-fun Tag.toTagEntity(userId: Long, postId: Long): TagEntity {
+fun Tag.toTagEntity(): TagEntity {
     return TagEntity(
-        id = id,
-        name = name,
-        postId = postId
+        tagId = id,
+        name = name
     )
 }

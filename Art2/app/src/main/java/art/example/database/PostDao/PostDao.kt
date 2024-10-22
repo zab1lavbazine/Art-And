@@ -5,33 +5,26 @@ import art.example.database.*
 
 @Dao
 interface PostDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPost(post: PostEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTags(tags: List<TagEntity>)
+    suspend fun insertImage(image: ImageEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPostTagCrossRef(crossRefs: List<PostTagCrossRef>)
+    suspend fun insertPostWithTags(postWithTags: List<PostWithTags>)
 
-    @Transaction
-    suspend fun insertPostWithTags(post: PostEntity, tags: List<TagEntity>) {
-        insertPost(post)
-        insertTags(tags)
-        val crossRefs = tags.map { PostTagCrossRef(post.id, it.id) }
-        insertPostTagCrossRef(crossRefs)
-    }
-
-    @Transaction
-    @Query("SELECT * FROM posts WHERE id = :postId")
-    suspend fun getPostWithTags(postId: Long): PostWithTags
-
-    // Get all posts with tags, images, and other details
+    // Fetch posts with their associated tags and images
     @Transaction
     @Query("SELECT * FROM posts")
-    suspend fun getAllPostsWithDetails(): List<PostWithTags>
+    suspend fun getAllPostsWithDetails(): List<PostWithTagsAndImage>
 
-    //insert images
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertImages(images: List<ImageEntity>)
+    // Fetch a single post with associated tags and images
+    @Transaction
+    @Query("SELECT * FROM posts WHERE postId = :postId")
+    suspend fun getPostWithTags(postId: Long): PostWithTagsAndImage?
+
+    @Query("DELETE FROM posts" )
+    suspend fun deleteAllPosts()
 }

@@ -2,59 +2,56 @@ package art.example.database
 
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import art.example.api.data.Post
+import art.example.api.data.User
 
 @Entity(tableName = "users")
 data class UserEntity(
-    @PrimaryKey val id: Long,
+    @PrimaryKey val userId: Long,
     val username: String,
     val email: String
 )
 
-@Entity(
-    primaryKeys = ["userId", "tagId"],
-    foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = TagEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["tagId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
-data class UserTagCrossRef(
-    val userId: Long,
-    val tagId: Long
-)
+fun UserEntity.toUser(): User{
+    return User(
+        id = userId,
+        username = username,
+        email = email
+    )
+}
 
 
+
+
+
+@Entity
 data class UserWithTags(
+    @Embedded val user : UserEntity,
+    @Relation(
+        parentColumn = "userId",
+        entityColumn = "userTagId"
+    )
+    val userTags: List<TagEntity>
+)
+
+fun UserWithTags.toUser() : User {
+    return User(
+        id = user.userId,
+        username = user.username,
+        email = user.email,
+        preferredTags = userTags.map { it.toTag() }
+    )
+}
+
+
+@Entity
+data class UserWithPosts(
     @Embedded val user: UserEntity,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(UserTagCrossRef::class)
+        parentColumn = "userId",
+        entityColumn = "userPostId"
     )
-    val tags: List<TagEntity>
+    val userPosts: List<PostEntity>
 )
-
-data class TagWithUsers(
-    @Embedded val tag: TagEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(UserTagCrossRef::class)
-    )
-    val users: List<UserEntity>
-)
-
-

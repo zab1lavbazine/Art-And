@@ -16,11 +16,10 @@ data class Post(
 )
 
 
-fun Post.toPostEntity(userId: Long): PostEntity {
+fun Post.toPostEntity(): PostEntity {
     return PostEntity(
-        id = id,
+        postId = id,
         title = title,
         description = description,
-        userId = userId
     )
 }
