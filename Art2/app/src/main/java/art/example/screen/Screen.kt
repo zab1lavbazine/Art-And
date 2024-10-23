@@ -9,4 +9,8 @@ sealed class Screen(val route: String) {
     }
 
     object CreatePost : Screen("posts/createPost")
+    object FolderDetail: Screen("folderDetail/{folderId}") {
+        fun createRoute(folderId: Long) = "folderDetail/$folderId"
+    }
+    object CreateFolder : Screen("createFolder")
 }

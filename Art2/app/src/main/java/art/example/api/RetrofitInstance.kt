@@ -3,6 +3,7 @@ package com.example.arthub.api
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import art.example.api.service.FolderApiService
 import art.example.api.service.PostApiService
 import art.example.api.service.TagApiService
 import art.example.api.service.UserApiService
@@ -32,8 +33,9 @@ object RetrofitInstance {
             .addInterceptor { chain: Interceptor.Chain ->
                 val requestBuilder = chain.request().newBuilder()
                 // Retrieve the token from SharedPreferences
-                val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+                val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val token = sharedPreferences.getString("auth_token", null)
+                Log.d("FLOW", "TOKEN: $token")
 
 
                 val originalRequest = chain.request()
@@ -73,6 +75,10 @@ object RetrofitInstance {
 
     fun getUserApiService(): UserApiService {
         return getRetrofitInstance().create(UserApiService::class.java)
+    }
+
+    fun getFolderApiService(): FolderApiService {
+        return getRetrofitInstance().create(FolderApiService::class.java)
     }
 
     // Method to create an authenticated request

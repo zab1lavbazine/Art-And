@@ -17,13 +17,14 @@ val appModules = module {
     single { RetrofitInstance.getUserApiService() } // Ensure this returns the correct instance
     single { RetrofitInstance.getPostApiService() }
     single { RetrofitInstance.getTagApiService() }
+    single { RetrofitInstance.getFolderApiService() }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().userDao() }
     single { get<AppDatabase>().postDao() }
     single { get<AppDatabase>().tagDao() }
 
-    factory { UserRepository(get(), get(), androidContext()) }
+    factory { UserRepository(get(), get(), androidContext(), get(), get(), get()) }
     factory { PostRepository(get(), get(), get(), androidContext()) }
 
     viewModel { UserViewModel(get(), androidContext()) }

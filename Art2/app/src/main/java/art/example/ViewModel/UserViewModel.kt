@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import art.example.api.data.Folder
 import art.example.api.data.User
 import art.example.api.reponses.UserCredentials
 import kotlinx.coroutines.launch
@@ -34,12 +35,32 @@ class UserViewModel(
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
 
+
+    private val _userFolders = MutableLiveData<List<Folder>>()
+    val userFolders: LiveData<List<Folder>> get() = _userFolders
+
     fun loadUsers() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val fetchedUsers = userRepository.getUsers()
                 _users.value = fetchedUsers
+            } catch (e: Exception) {
+                // Handle error
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+
+    fun getUserFolders() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val fetchedFolders = userRepository.getCurrentUserFolders()
+                _userFolders.value = fetchedFolders
             } catch (e: Exception) {
                 // Handle error
             } finally {
@@ -75,16 +96,39 @@ class UserViewModel(
             try {
                 // Get the saved user ID from SharedPreferences
                 val userId = sharedPreferences.getLong("current_user_id", -1)
+                Log.d("FLOW", "Current user ID: $userId")
                 if (userId != -1L) {
                     // Fetch the current user from the repository
-                    val curr = userRepository.getUserById(userId) // Fetch user by ID
-                    Log.d("UserViewModel", "Fetched current user: $curr")
+                    val curr = userRepository.getUserAccount(userId) // Fetch user by ID
                     _currentUser.value = curr
                 } else {
                     _currentUser.value = null // Handle the case where user ID is invalid
                 }
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Error fetching current user", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+    fun createFolder(title: String, description: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null // Clear previous error message
+            try {
+                val newFolder = userRepository.createFolder(title, description)
+                if (newFolder != null) {
+                    // Update the list of user folders
+                    val updatedFolders = _userFolders.value?.toMutableList() ?: mutableListOf()
+                    updatedFolders.add(newFolder)
+                    _userFolders.value = updatedFolders
+                } else {
+                    _errorMessage.value = "Failed to create folder. Please try again."
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to create folder. Please try again."
             } finally {
                 _isLoading.value = false
             }

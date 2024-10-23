@@ -14,8 +14,8 @@ interface UserApiService {
     @GET("/api/users")
     suspend fun getUsers():List<User>
 
-    @GET("/api/users/{id}")
-    suspend fun getUserById(): User?
+    @GET("/api/users/account")
+    suspend fun getUserAccount(): User?
 
     @POST("/api/auth/login")
     @Headers("Content-Type: application/json")

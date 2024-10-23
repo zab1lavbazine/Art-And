@@ -2,6 +2,7 @@ package art.example.navigation
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import art.example.ViewModel.UserViewModel
+import art.example.api.data.Folder
 import art.example.api.data.Post
 import art.example.api.data.User
 import art.example.screen.Screen
@@ -86,12 +89,15 @@ fun MyProfile(navController: NavHostController) {
     val currentUser by userViewModel.currentUser.observeAsState()
     val isLoading by userViewModel.isLoading.observeAsState(true)
 
+    val userFolders by userViewModel.userFolders.observeAsState()
+
     // State to manage the selected tab index
     val selectedTabIndex = remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
+        userViewModel.getUserFolders()
     }
 
     Scaffold(
@@ -153,7 +159,7 @@ fun MyProfile(navController: NavHostController) {
                 // Display the selected content based on the selected tab
                 when (selectedTabIndex.intValue) {
                     0 -> UserPostsList(usersPosts = currentUser?.posts, navController) // Pass loading status
-                    1 -> UserFoldersList() // Your user folders list implementation
+                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController) } // Your user folders list implementation
                 }
             }
         }
@@ -192,11 +198,73 @@ fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
 
 
 @Composable
-fun UserFoldersList() {
+fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController) {
+
+    CreateFolderButton(onClick = {
+        // Handle the logic to create a new folder here
+        navController.navigate(Screen.CreateFolder.route) // Navigate to create folder screen
+    })
     // Implement your user folders list UI here
-    LazyColumn {
-        items(10) { index ->
-            Text(text = "Folder #$index", modifier = Modifier.padding(8.dp))
+    if (userFolders.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
         }
+    }else {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                items(userFolders) { folder ->
+                    FolderCard(folder = folder, onClick = {
+                        // nothing to do
+                    })
+                }
+            }
+        }
+}
+
+
+@Composable
+fun FolderCard(folder: Folder, onClick : () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.Gray)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = folder.title, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = folder.description, fontSize = 16.sp, color = Color.Gray)
+        }
+    }
+}
+
+@Composable
+fun CreateFolderButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .clickable(onClick = onClick)
+            .height(56.dp), // Adjust height as needed
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "+ Create New Folder",
+            fontSize = 20.sp,
+            color = Color.White,
+            modifier = Modifier
+                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+        )
     }
 }

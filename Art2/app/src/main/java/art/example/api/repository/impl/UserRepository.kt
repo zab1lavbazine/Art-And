@@ -3,15 +3,24 @@ package art.example.api.repository.impl
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import art.example.api.data.DTO.FolderDTO
+import art.example.api.data.Folder
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.Credentials
 import com.google.android.gms.auth.api.credentials.CredentialsClient
 import art.example.api.data.User
+import art.example.api.data.toFolderEntity
+import art.example.api.data.toPostEntity
+import art.example.api.data.toTagEntity
 import art.example.api.reponses.UserCredentials
 import art.example.api.repository.IUserApiService
+import art.example.api.service.FolderApiService
 import art.example.api.service.UserApiService
+import art.example.database.PostDao.PostDao
+import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
 import art.example.database.UserEntity
+import art.example.database.toFolder
 import art.example.database.toUser
 import art.example.navigation.LoginScreen
 import retrofit2.HttpException
@@ -19,7 +28,10 @@ import retrofit2.HttpException
 class UserRepository(
     private val userApiService: UserApiService,
     private val userDao: UserDao, // Inject the DAO
-    private val context: Context
+    private val context: Context,
+    private val tagDao: TagDao,
+    private val postDao: PostDao,
+    private val folderApiService: FolderApiService
 ) : IUserApiService {
 
     private var currentUser: User? = null
@@ -63,6 +75,47 @@ class UserRepository(
     }
 
 
+
+    fun getUserFolders(){
+
+    }
+
+    suspend fun getCurrentUserFolders(): List<Folder> {
+        return try {
+            val userWithFolders = userDao.getUserByIdWithFolders(currentUser?.id ?: 0)
+            val userFolders = userWithFolders?.userFolders
+            Log.d("FLOW", "Fetched user folders from DB: $userFolders")
+            if (userFolders?.isEmpty() == true){
+                val folders = folderApiService.getFoldersByUser()
+                folders.forEach { folder -> folder.user = currentUser }
+                userDao.insertFolders(folders.map { it.toFolderEntity() })
+                folders
+            } else {
+                userFolders?.map { it.toFolder() } ?: emptyList()
+            }
+        } catch (e : Exception){
+                Log.e("FLOW", "Error fetching folders: ${e.message}", e)
+                emptyList()
+            }
+        }
+
+
+
+    suspend fun createFolder(title: String, description: String): Folder? {
+        return try {
+            val folderDTO = FolderDTO(title, description, emptyList())
+            val folder = folderApiService.createFolder(folderDTO)
+            if (folder != null) {
+                userDao.insertFolder(folder.toFolderEntity())
+            }
+            folder
+        } catch (e: Exception) {
+            Log.e("FLOW", "Error creating folder: ${e.message}", e)
+            null
+        }
+    }
+
+
     // Get all users, either from the API or from the local database if offline
     override suspend fun getUsers(): List<User> {
         return try {
@@ -78,14 +131,31 @@ class UserRepository(
         }
     }
 
-    // Get a specific user either from the API or fallback to the local database
     override suspend fun getUserById(id: Long): User? {
+        TODO("Not yet implemented")
+    }
+
+    // Get a specific user either from the API or fallback to the local database
+    suspend fun getUserAccount(id: Long): User? {
         return try {
-            val user = userApiService.getUserById() // Fetch from API
-            user?.let { userDao.insertUser(UserEntity(it.id, it.username, it.email)) } // Save to DB
+            val user = userApiService.getUserAccount() // Fetch from API
+            val userFolders = folderApiService.getFoldersByUser() // Fetch user folders
+            Log.d("FLOW", "Fetched user from API: $user")
+            Log.d("FLOW", "Fetched user folders from API: $userFolders")
+            user?.let {
+                userDao.insertUser(UserEntity(it.id, it.username, it.email))
+                it.posts?.let { posts -> postDao.insertPosts(posts.map { post -> post.toPostEntity() }) }
+                it.preferredTags?.let { tags -> tagDao.insertTags(tags.map { tag -> tag.toTagEntity() }) }
+            } // Save to DB
+            userFolders.forEach { folder ->
+                folder.user = user
+            }
+            userFolders.let {
+                userDao.insertFolders(it.map { folder -> folder.toFolderEntity() })
+            } // Save user folders to DB
             user
         } catch (e: Exception) {
-            Log.e("UserRepository", "Error fetching user from API, loading from local DB", e)
+            Log.e("FLOW", "Error fetching user from API, loading from local DB", e)
             // Fallback to local database
             userDao.getUserByIdWithTags(id)?.toUser() // Convert UserEntity to User
         }
@@ -133,7 +203,7 @@ class UserRepository(
     }
 
     private fun saveAuthTokenToSharedPreferences(token: String) {
-        val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+        val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         sharedPreferences.edit().putString("auth_token", token).apply()
     }
 
