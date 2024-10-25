@@ -26,14 +26,25 @@ class UserViewModel(
     private val _users = MutableLiveData<List<User>>()
     val users: LiveData<List<User>> get() = _users
 
-    private val _isLoading = MutableLiveData<Boolean>(true)
+    private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _isLoadingPosts = MutableLiveData<Boolean>(false)
+    val isLoadingPosts: LiveData<Boolean> = _isLoadingPosts
+
+
+    private val _isLoadingFolder = MutableLiveData<Boolean>(false)
+    val isLoadingFolder:LiveData<Boolean> = _isLoadingFolder
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
+
+
+    private val _selectedFolder = MutableLiveData<Folder?>()
+    val selectedFolder: LiveData<Folder?> get() = _selectedFolder
 
 
     private val _userFolders = MutableLiveData<List<Folder>>()
@@ -43,14 +54,14 @@ class UserViewModel(
 
     fun getUserFolders() {
         viewModelScope.launch {
-            _isLoading.value = true
+            _isLoadingPosts.value = true
             try {
                 val fetchedFolders = userRepository.getCurrentUserFolders()
                 _userFolders.value = fetchedFolders
             } catch (e: Exception) {
                 // Handle error
             } finally {
-                _isLoading.value = false
+                _isLoadingPosts.value = false
             }
         }
     }
@@ -59,6 +70,21 @@ class UserViewModel(
 
     fun getSavedUser(): UserCredentials? {
         return userRepository.getSavedUserCredentials()
+    }
+
+
+    fun getDetailedFolder(folderId: Long){
+        viewModelScope.launch {
+            _isLoadingFolder.value = true
+            try {
+                val fetchedFolder = userRepository.getFolderById(folderId)
+                _selectedFolder.value = fetchedFolder
+            } catch (e: Exception){
+                Log.d("FLOW", "ERROR with fetching folder with id: $folderId")
+            } finally {
+                _isLoadingFolder.value = false
+            }
+        }
     }
 
     fun getCurrentUser() {

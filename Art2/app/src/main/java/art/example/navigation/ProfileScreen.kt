@@ -32,7 +32,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +54,7 @@ fun MyProfile(navController: NavHostController) {
     val userViewModel: UserViewModel = koinViewModel()
     val currentUser by userViewModel.currentUser.observeAsState()
     val isLoading by userViewModel.isLoading.observeAsState(false)
+    val isLoadingPost by userViewModel.isLoadingPosts.observeAsState(false)
 
     val userFolders by userViewModel.userFolders.observeAsState()
 
@@ -134,7 +134,7 @@ fun MyProfile(navController: NavHostController) {
                 // Display the selected content based on the selected tab
                 when (selectedTabIndex.intValue) {
                     0 -> UserPostsList(usersPosts = currentUser?.posts, navController) // Pass loading status
-                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController) } // Your user folders list implementation
+                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController, isLoadingPost) } // Your user folders list implementation
                 }
             }
         }
@@ -204,12 +204,22 @@ fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
 
 
 @Composable
-fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController) {
+fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController, isLoadingPost: Boolean) {
 
     CreateFolderButton(onClick = {
         // Handle the logic to create a new folder here
         navController.navigate(Screen.CreateFolder.route) // Navigate to create folder screen
     })
+
+    if (isLoadingPost){
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+    } else {
     // Implement your user folders list UI here
     if (userFolders.isEmpty()) {
         Box(
@@ -225,12 +235,11 @@ fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController)
                 contentPadding = PaddingValues(8.dp)
             ) {
                 items(userFolders) { folder ->
-                    FolderCard(folder = folder, onClick = {
-                        // nothing to do
-                    })
+                    FolderCard(folder = folder, onClick = {navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))})
                 }
             }
         }
+    }
 }
 
 
@@ -239,6 +248,7 @@ fun FolderCard(folder: Folder, onClick : () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
@@ -256,21 +266,27 @@ fun FolderCard(folder: Folder, onClick : () -> Unit) {
 
 @Composable
 fun CreateFolderButton(onClick: () -> Unit) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clickable(onClick = onClick)
-            .height(56.dp), // Adjust height as needed
-        contentAlignment = Alignment.Center
+            .padding(8.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.Gray)
     ) {
-        Text(
-            text = "+ Create New Folder",
-            fontSize = 20.sp,
-            color = Color.White,
+        Box(
             modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-        )
+                .fillMaxWidth()
+                .padding(16.dp), // Adjust padding as needed
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "+ Create New Folder",
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

@@ -13,4 +13,5 @@ sealed class Screen(val route: String) {
         fun createRoute(folderId: Long) = "folderDetail/$folderId"
     }
     object CreateFolder : Screen("createFolder")
+    object SearchScreen: Screen("screen")
 }

@@ -43,4 +43,12 @@ data class FolderWithPosts (
         associateBy = Junction(FolderWithPostsCrossRef::class)
     )
     val posts: List<PostEntity>
-)
+){
+    fun toFolder(): Folder{
+        return Folder(
+            id = folderEntity.folderId,
+            title =  folderEntity.title,
+            description = folderEntity.description
+        )
+    }
+}

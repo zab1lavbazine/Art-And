@@ -35,13 +35,11 @@ object RetrofitInstance {
                 // Retrieve the token from SharedPreferences
                 val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val token = sharedPreferences.getString("auth_token", null)
-                Log.d("FLOW", "TOKEN: $token")
 
 
                 val originalRequest = chain.request()
                 // Add the token to the request header if it exists
                 if (token != null && !isAuthEndpoint(originalRequest.url.toString())) {
-                    Log.d("FLOW", "WITH TOKEN")
                     requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
 

@@ -4,11 +4,12 @@ package art.example.navigation
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -18,38 +19,57 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import art.example.screen.Screen
 
 
 
 
-val screenIcons = mapOf(
-    "Posts" to Icons.Filled.Home,
-    "Favorites" to Icons.Filled.Favorite,
-    "Profile" to Icons.Filled.Person
-)
+
+
+
+
+
+
+enum class NavigationItem(
+    val title: String,
+    val icon: ImageVector,
+    val route: String
+) {
+    POSTS("Posts", Icons.Filled.Home, Screen.PostsScreen.route),
+    NEW("New", Icons.Filled.Add, Screen.CreatePost.route),
+    PROFILE("Profile", Icons.Filled.Person, Screen.MyProfile.route)
+}
+
+
 
 @Composable
 fun MyBottomNavigationBar(
-    items: List<String>,
+    items: List<NavigationItem>,
     currentRoute: String?, // Update to String
-    onItemSelected: (String) -> Unit
+    onItemSelected: (NavigationItem) -> Unit
 ) {
     BottomNavigation(
+        backgroundColor = MaterialTheme.colors.primary,
         modifier = Modifier.navigationBarsPadding() // Add padding to avoid overlapping with the navigation bar
     ) {
         items.forEach { item ->
             BottomNavigationItem(
-                label = { Text(text = item) },
-                selected = currentRoute == item, // Compare with item string
+                label = {
+                    Text(
+                        text = item.title,
+                        color = if (currentRoute == item.route) MaterialTheme.colors.onPrimary else Color.LightGray
+                    )
+                        },
+                selected = currentRoute == item.route, // Compare with item string
                 onClick = { onItemSelected(item) },
                 alwaysShowLabel = true,
                 icon = {
                     Icon(
-                        imageVector = screenIcons[item] ?: Icons.Filled.Home, // Default icon
-                        contentDescription = item
+                        imageVector = item.icon,
+                        contentDescription = item.title
                     )
                 }
             )
@@ -61,22 +81,14 @@ fun MyBottomNavigationBar(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     MyBottomNavigationBar(
-        items = listOf("Posts", "New", "Profile"),
-        currentRoute = navController.currentDestination?.route, // Get the current route as a string
+        items = NavigationItem.entries, // Use enum values
+        currentRoute = navController.currentDestination?.route,
         onItemSelected = { selectedItem ->
-            when (selectedItem) {
-                "Posts" -> navController.navigate(Screen.PostsScreen.route) {
+            if (navController.currentDestination?.route != selectedItem.route) {
+                navController.navigate(selectedItem.route) {
                     // Clear the back stack if needed
-                    popUpTo(Screen.PostsScreen.route) { inclusive = true }
+                    popUpTo(selectedItem.route) { inclusive = true }
                 }
-                "New" -> navController.navigate(Screen.CreatePost.route){
-                    popUpTo(Screen.PostsScreen.route){ inclusive = true}
-                }
-                "Profile" -> navController.navigate(Screen.MyProfile.route) {
-                    // Clear the back stack if needed
-                    popUpTo(Screen.MyProfile.route) { inclusive = true }
-                }
-                // Add other screens as needed
             }
         }
     )
@@ -92,7 +104,10 @@ fun MyTopAppBar(
     onBackClicked: (() -> Unit)? = null
 ) {
     TopAppBar(
-        title = { Text(text = title) },
+        title = { Text(
+            text = title,
+            color = MaterialTheme.colors.primary
+            ) },
         navigationIcon = {
             if (showBackButton && onBackClicked != null) {
                 IconButton(onClick = onBackClicked) {

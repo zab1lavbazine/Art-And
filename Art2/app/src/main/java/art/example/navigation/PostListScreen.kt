@@ -57,12 +57,13 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
         viewModel.loadPost()
     }
 
+
     Scaffold(
         topBar = {
             MyTopAppBar(
                 title = "Posts",
                 showBackButton = false,
-                onSearchClicked = { /* Handle search */ },
+                onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
                 onMoreClicked = { /* Handle more options */ }
             )
         },

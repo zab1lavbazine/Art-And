@@ -7,7 +7,7 @@ data class Folder(
     val title : String,
     val description: String,
     var user: User? = null,
-    val posts: List<Post>? = null
+    var posts: List<Post>? = null
 )
 
 

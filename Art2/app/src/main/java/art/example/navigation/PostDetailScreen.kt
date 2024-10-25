@@ -155,7 +155,7 @@ fun PostCardItem(post: Post) {
                 Text(
                     text = post.description,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = Color.LightGray,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )

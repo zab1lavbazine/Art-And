@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import art.example.database.entities.FolderEntity
+import art.example.database.entities.FolderWithPosts
 import art.example.database.entities.UserEntity
 import art.example.database.entities.UserWithFolders
 import art.example.database.entities.UserWithPosts
@@ -44,6 +45,13 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFolders(folders: List<FolderEntity>)
+
+
+    @Query("SELECT * FROM folders WHERE folderId = :folderId")
+    suspend fun getFolderById(folderId: Long) : FolderEntity
+
+    @Query("SELECT * FROM folders WHERE folderId = :folderId")
+    suspend fun getDetailedFolderById(folderId: Long): FolderWithPosts
 
 
     @Transaction

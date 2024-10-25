@@ -81,19 +81,53 @@ class UserRepository(
             val userWithFolders = userDao.getUserByIdWithFolders(currentUser?.id ?: 0)
             val userFolders = userWithFolders?.userFolders
             Log.d("FLOW", "Fetched user folders from DB: $userFolders")
-            if (userFolders?.isEmpty() == true){
+            if (userFolders.isNullOrEmpty()){
                 val folders = folderApiService.getFoldersByUser()
                 folders.forEach { folder -> folder.user = currentUser }
+                Log.d("FLOW", "FOLDERS FROM API: $folders")
                 userDao.insertFolders(folders.map { it.toFolderEntity() })
                 folders
             } else {
-                userFolders?.map { it.toFolder() } ?: emptyList()
+                userFolders.map { it.toFolder() }
             }
         } catch (e : Exception){
                 Log.e("FLOW", "Error fetching folders: ${e.message}", e)
                 emptyList()
             }
         }
+
+
+    suspend fun getFolderById(folderId: Long): Folder? {
+        return try {
+            val localFolder = userDao.getFolderById(folderId)
+            if (localFolder != null) {
+                val detailedFolder = userDao.getDetailedFolderById(folderId)
+                val userInFolder = detailedFolder.folderEntity.userFolderId?.let {
+                    userDao.getUserById(
+                        it
+                    )
+                }
+                val folder = detailedFolder.toFolder()
+                val postsFromFolder =
+                    postDao.getDetailedPostsById(detailedFolder.posts.map { it.postId })
+                folder.posts = postsFromFolder.map { it.toPost() }
+                if (userInFolder != null) {
+                    folder.user = userInFolder.toUser()
+                }
+
+                // full folder completed and returned
+                folder
+            } else {
+                val apiFolder = folderApiService.getFolderById(folderId)
+                apiFolder
+            }
+        } catch (e : Exception){
+            Log.e("FLOW", "Error fetching folder with id: $folderId")
+            null
+        }
+    }
+
+
 
 
 
