@@ -1,6 +1,6 @@
 package art.example.api.data
 
-import art.example.database.PostEntity
+import art.example.database.entities.PostEntity
 import kotlinx.serialization.Serializable
 
 
@@ -16,10 +16,11 @@ data class Post(
 )
 
 
-fun Post.toPostEntity(): PostEntity {
+fun Post.toPostEntity(userId: Long): PostEntity {
     return PostEntity(
         postId = id,
         title = title,
         description = description,
+        userId = userId
     )
 }

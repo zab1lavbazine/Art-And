@@ -1,11 +1,9 @@
 package art.example.api.repository.impl
 
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import art.example.api.data.DTO.FolderDTO
 import art.example.api.data.Folder
-import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.Credentials
 import com.google.android.gms.auth.api.credentials.CredentialsClient
 import art.example.api.data.User
@@ -19,10 +17,13 @@ import art.example.api.service.UserApiService
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
-import art.example.database.UserEntity
-import art.example.database.toFolder
-import art.example.database.toUser
-import art.example.navigation.LoginScreen
+import art.example.database.entities.UserEntity
+import art.example.database.entities.UserWithFolders
+import art.example.database.entities.UserWithPosts
+import art.example.database.entities.UserWithTags
+import art.example.database.entities.UserWithTagsCrossRef
+import art.example.database.entities.toFolder
+import art.example.database.entities.toTag
 import retrofit2.HttpException
 
 class UserRepository(
@@ -75,11 +76,6 @@ class UserRepository(
     }
 
 
-
-    fun getUserFolders(){
-
-    }
-
     suspend fun getCurrentUserFolders(): List<Folder> {
         return try {
             val userWithFolders = userDao.getUserByIdWithFolders(currentUser?.id ?: 0)
@@ -116,48 +112,40 @@ class UserRepository(
     }
 
 
-    // Get all users, either from the API or from the local database if offline
-    override suspend fun getUsers(): List<User> {
-        return try {
-            // Fetch from API
-            val users = userApiService.getUsers()
-            // Save to local database
-            users.forEach { userDao.insertUser(UserEntity(it.id, it.username, it.email)) }
-            users
-        } catch (e: Exception) {
-            Log.e("UserRepository", "Error fetching users from API, loading from local DB", e)
-            // Fallback to local database
-            userDao.getUsersWithTags().map { it.toUser() } // Convert UserEntity to User
-        }
-    }
-
-    override suspend fun getUserById(id: Long): User? {
-        TODO("Not yet implemented")
-    }
-
     // Get a specific user either from the API or fallback to the local database
     suspend fun getUserAccount(id: Long): User? {
         return try {
             val user = userApiService.getUserAccount() // Fetch from API
-            val userFolders = folderApiService.getFoldersByUser() // Fetch user folders
             Log.d("FLOW", "Fetched user from API: $user")
-            Log.d("FLOW", "Fetched user folders from API: $userFolders")
             user?.let {
+                // insert user in the database
                 userDao.insertUser(UserEntity(it.id, it.username, it.email))
-                it.posts?.let { posts -> postDao.insertPosts(posts.map { post -> post.toPostEntity() }) }
+                //insert posts in the database
+                it.posts?.let { posts ->
+                    postDao.insertPosts(posts.map { post -> post.toPostEntity(user.id) })
+                }
+
+                // insert tags
                 it.preferredTags?.let { tags -> tagDao.insertTags(tags.map { tag -> tag.toTagEntity() }) }
-            } // Save to DB
-            userFolders.forEach { folder ->
-                folder.user = user
-            }
-            userFolders.let {
-                userDao.insertFolders(it.map { folder -> folder.toFolderEntity() })
-            } // Save user folders to DB
+                it.preferredTags?.forEach{ tags -> userDao.insertUserWithTag(UserWithTagsCrossRef(user.id, tags.id)) }
+            } // Save to DB new folders
+
+            // return user
             user
         } catch (e: Exception) {
             Log.e("FLOW", "Error fetching user from API, loading from local DB", e)
             // Fallback to local database
-            userDao.getUserByIdWithTags(id)?.toUser() // Convert UserEntity to User
+            val userEntity = userDao.getUserById(id) ?: return null
+            // get user tags from database
+            val userTags = userDao.getUserByIdWithTags(id)
+            val user = userEntity.toUser()
+            user.preferredTags = userTags.tags.map { it.toTag() }
+            // posts
+            val userWithPosts = userDao.getUserByIdWithPosts(id)
+            val postsWithDetails = postDao.getDetailedPostsById(userWithPosts.userPosts.map { it.postId })
+            user.posts = postsWithDetails.map { it.toPost() }
+
+            user
         }
     }
 

@@ -25,7 +25,7 @@ val appModules = module {
     single { get<AppDatabase>().tagDao() }
 
     factory { UserRepository(get(), get(), androidContext(), get(), get(), get()) }
-    factory { PostRepository(get(), get(), get(), androidContext()) }
+    factory { PostRepository(get(), get(), get(), get(), androidContext()) }
 
     viewModel { UserViewModel(get(), androidContext()) }
     viewModel { PostViewModel(get(), androidContext()) }

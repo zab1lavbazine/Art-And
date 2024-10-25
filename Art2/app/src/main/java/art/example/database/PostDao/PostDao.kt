@@ -1,8 +1,10 @@
 package art.example.database.PostDao
 
 import androidx.room.*
-import art.example.api.data.Post
-import art.example.database.*
+import art.example.database.entities.ImageEntity
+import art.example.database.entities.PostEntity
+import art.example.database.entities.PostWithTags
+import art.example.database.entities.PostWithTagsAndImage
 
 @Dao
 interface PostDao {
@@ -17,7 +19,10 @@ interface PostDao {
     suspend fun insertImage(image: ImageEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPostWithTags(postWithTags: List<PostWithTags>)
+    suspend fun insertPostsWithTags(postWithTags: List<PostWithTags>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPostWithTag(postWithTag: PostWithTags)
 
     // Fetch posts with their associated tags and images
     @Transaction
@@ -36,7 +41,7 @@ interface PostDao {
     // Fetch a single post with associated tags and images
     @Transaction
     @Query("SELECT * FROM posts WHERE postId = :postId")
-    suspend fun getPostWithTags(postId: Long): PostWithTagsAndImage?
+    suspend fun getPostWithTagsAndImage(postId: Long): PostWithTagsAndImage?
 
     @Query("DELETE FROM posts" )
     suspend fun deleteAllPosts()

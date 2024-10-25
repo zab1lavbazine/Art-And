@@ -39,20 +39,6 @@ class UserViewModel(
     private val _userFolders = MutableLiveData<List<Folder>>()
     val userFolders: LiveData<List<Folder>> get() = _userFolders
 
-    fun loadUsers() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val fetchedUsers = userRepository.getUsers()
-                _users.value = fetchedUsers
-            } catch (e: Exception) {
-                // Handle error
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
 
 
     fun getUserFolders() {
@@ -69,22 +55,7 @@ class UserViewModel(
         }
     }
 
-    fun loadUserById(id: Long) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val user = userRepository.getUserById(id)
-                // Check if the fetched user is different from the current selected user
-                if (_selectedUser.value != user) {
-                    _selectedUser.value = user // Update LiveData with the new user
-                }
-            } catch (e: Exception) {
-                // Handle error
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
+
 
     fun getSavedUser(): UserCredentials? {
         return userRepository.getSavedUserCredentials()

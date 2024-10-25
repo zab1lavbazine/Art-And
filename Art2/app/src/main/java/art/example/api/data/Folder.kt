@@ -1,6 +1,6 @@
 package art.example.api.data
 
-import art.example.database.FolderEntity
+import art.example.database.entities.FolderEntity
 
 data class Folder(
     val id: Long,

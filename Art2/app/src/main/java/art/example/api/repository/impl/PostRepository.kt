@@ -10,23 +10,23 @@ import art.example.api.data.DTO.MultipartFile
 import art.example.api.data.DTO.PostDTO
 import art.example.api.repository.IPostApiService
 import art.example.api.service.PostApiService
-import art.example.database.*
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
+import art.example.database.UserDao.UserDao
+import art.example.database.entities.PostWithTags
+import art.example.database.entities.toTag
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import java.io.ByteArrayOutputStream
 
 class PostRepository(
     private val postApiService: PostApiService, // API Service
     private val postDao: PostDao, // Post DAO
     private val tagDao: TagDao, // Tag DAO
+    private val userDao: UserDao,
     private val context : Context
 ) : IPostApiService {
 
@@ -70,18 +70,22 @@ class PostRepository(
     override suspend fun getPostById(id: Long): Post? {
         // Fetch a single post from cache or database
         return postsCache.find { it.id == id } ?: withContext(Dispatchers.IO) {
-            postDao.getPostWithTags(id)?.toPost() // Convert PostWithTags to Post
+            postDao.getPostWithTagsAndImage(id)?.toPost() // Convert PostWithTags to Post
         }
     }
 
     // Save post, tags, and images into the database
-    suspend fun savePost(post: Post) {
+    private suspend fun savePost(post: Post) {
         withContext(Dispatchers.IO) {
             try {
                 // Save the PostEntity
-                val postEntity = post.toPostEntity()
+                Log.d("FLOW", "USER in the post: ${post.patron}")
+                val postEntity = post.patron?.let { post.toPostEntity(it.id) }
+                if (postEntity == null) {
+                    Log.d("FLOW", "USER NULL")
+                    throw IllegalArgumentException("No user provided")
+                }
                 postDao.insertPost(postEntity)
-
                 // Save the associated image if present
                 post.image?.let { image ->
                     val imageEntity = image.toImageEntity(postId = post.id)
@@ -93,8 +97,9 @@ class PostRepository(
                 post.tags?.let { tags ->
                     val tagEntities = tags.map { it.toTagEntity() }
                     tagDao.insertTags(tagEntities) // Save tags first
+                    Log.d("FLOW", "TAG saving to the database $tagEntities")
                     val postWithTags = tags.map { tag -> PostWithTags(tagId = tag.id, postId = post.id) }
-                    postDao.insertPostWithTags(postWithTags) // Insert the many-to-many relationships
+                    postDao.insertPostsWithTags(postWithTags) // Insert the many-to-many relationships
                 }
             } catch (e: Exception) {
                 Log.e("PostRepository", "Error saving post: ${e.message}", e)
@@ -112,44 +117,6 @@ class PostRepository(
                 newFetchedPost?.let { savePost(newFetchedPost) }
             } catch (e: Exception){
                 Log.e("FLOW", "Error creating post $e")
-            }
-        }
-    }
-
-
-    private suspend fun getImageFromUrl(imageUrl: String): MultipartFile? {
-        return withContext(Dispatchers.IO) {
-            Log.d("FLOW", "GETTING IMAGE FROM URL url: $imageUrl")
-
-            try {
-                // Load the image from the URL
-                val imageLoader = ImageLoader(context)
-                val request = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .allowHardware(false) // Disable hardware bitmaps
-                    .build()
-
-                // Fetch the image
-                val result = (imageLoader.execute(request) as? SuccessResult)?.drawable
-
-                if (result is BitmapDrawable) {
-                    // Convert drawable to bitmap
-                    val bitmap: Bitmap = result.bitmap
-
-                    // Convert bitmap to byte array
-                    val byteArrayOutputStream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-                    val byteArray = byteArrayOutputStream.toByteArray()
-
-                    // Create a custom MultipartFile from byte array
-                    InMemoryMultipartFile("image.jpg", byteArray)
-                } else {
-                    Log.e("FLOW", "Failed to load image from URL: $imageUrl")
-                    null
-                }
-            } catch (e: Exception) {
-                Log.e("FLOW", "Error loading image: ${e.message}")
-                null
             }
         }
     }

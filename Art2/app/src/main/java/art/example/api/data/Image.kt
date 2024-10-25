@@ -1,6 +1,6 @@
 package art.example.api.data
 
-import art.example.database.ImageEntity
+import art.example.database.entities.ImageEntity
 import kotlinx.serialization.Serializable
 
 

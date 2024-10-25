@@ -35,12 +35,9 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
 
     var username by remember { mutableStateOf(savedUser?.username ?: "") }
     var password by remember { mutableStateOf(savedUser?.password ?: "") } // Default to empty or the saved password
-    var isLoading by remember { mutableStateOf(false) }
-
+    val isLoading by userViewModel.isLoading.observeAsState(initial = false)
     // Observe error message from ViewModel
     val errorMessage by userViewModel.errorMessage.observeAsState()
-
-    val coroutineScope = rememberCoroutineScope() // Get CoroutineScope
 
     Column(
         modifier = Modifier

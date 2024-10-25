@@ -7,18 +7,35 @@ import androidx.room.RoomDatabase
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
+import art.example.database.entities.FolderEntity
+import art.example.database.entities.FolderWithPosts
+import art.example.database.entities.FolderWithPostsCrossRef
+import art.example.database.entities.ImageEntity
+import art.example.database.entities.PostEntity
+import art.example.database.entities.PostWithTags
+import art.example.database.entities.TagEntity
+import art.example.database.entities.UserEntity
+import art.example.database.entities.UserWithFolders
+import art.example.database.entities.UserWithPosts
+import art.example.database.entities.UserWithTags
+import art.example.database.entities.UserWithTagsCrossRef
 
 @Database(
     entities = [
+        // user includes
         UserEntity::class,
+        UserWithTagsCrossRef::class,
+        // tag include
         TagEntity::class,
+        // post includes
         PostEntity::class,
         ImageEntity::class,
         PostWithTags::class,
+        // folder entity
         FolderEntity::class,
-        FolderWithPosts::class,
+        FolderWithPostsCrossRef::class,
                ],
-    version = 5 // Increment the version number
+    version = 2 // Increment the version number
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

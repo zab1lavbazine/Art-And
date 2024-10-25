@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import art.example.database.TagEntity
+import art.example.database.entities.TagEntity
 
 
 @Dao
@@ -20,6 +20,10 @@ interface TagDao {
 
     @Query("SELECT * FROM tags")
     suspend fun loadTags(): List<TagEntity>
+
+
+    @Query("SELECT * FROM tags WHERE tagId IN (:tagsIds)")
+    suspend fun getTagsByIds(tagsIds: List<Long>) : List<TagEntity>
 
 
 }

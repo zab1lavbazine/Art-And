@@ -1,19 +1,17 @@
-package art.example.database
+package art.example.database.entities
 
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import art.example.api.data.Post
 
 
-@Entity(
-    tableName = "posts",
-)
+@Entity(tableName = "posts")
 data class PostEntity(
     @PrimaryKey val postId: Long,
+    val userId: Long,
     val title: String,
     val description: String,
 )

@@ -1,5 +1,6 @@
 package art.example.api.data
 
+import art.example.database.entities.UserEntity
 import kotlinx.serialization.Serializable
 
 
@@ -8,9 +9,17 @@ data class User(
     val id: Long,
     val username: String,
     val email: String,
-    val preferredTags: List<Tag>? = null,
-    val posts: List<Post>? = null
-)
+    var preferredTags: List<Tag>? = null,
+    var posts: List<Post>? = null
+) {
+    fun toUserEntity(): UserEntity {
+        return UserEntity(
+            userId = id,
+            username = username,
+            email = email
+        )
+    }
+}
 
 
 

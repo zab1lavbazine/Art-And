@@ -51,53 +51,28 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun UserCard(user: User) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color.Gray)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = user.username, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = user.email, fontSize = 16.sp, color = Color.Gray)
-
-            user.preferredTags?.let { tags ->
-                if (tags.isNotEmpty()){
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
-                    tags.forEach { tag ->
-                        TagBox(tag.name)
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
-
-@Composable
 fun MyProfile(navController: NavHostController) {
     val userViewModel: UserViewModel = koinViewModel()
     val currentUser by userViewModel.currentUser.observeAsState()
-    val isLoading by userViewModel.isLoading.observeAsState(true)
+    val isLoading by userViewModel.isLoading.observeAsState(false)
 
     val userFolders by userViewModel.userFolders.observeAsState()
 
     // State to manage the selected tab index
     val selectedTabIndex = remember { mutableIntStateOf(0) }
 
+
+    // for getting current user from database
     LaunchedEffect(Unit) {
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
-        userViewModel.getUserFolders()
+    }
+
+    LaunchedEffect(selectedTabIndex.intValue) {
+        if (selectedTabIndex.intValue == 1){
+            Log.d("FLOW", "Loading user folders")
+            userViewModel.getUserFolders()
+        }
     }
 
     Scaffold(
@@ -165,6 +140,37 @@ fun MyProfile(navController: NavHostController) {
         }
     }
 }
+
+
+@Composable
+fun UserCard(user: User) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.Gray)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = user.username, fontSize = 20.sp, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = user.email, fontSize = 16.sp, color = Color.Gray)
+
+            user.preferredTags?.let { tags ->
+                if (tags.isNotEmpty()){
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
+                    tags.forEach { tag ->
+                        TagBox(tag.name)
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {

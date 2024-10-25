@@ -1,6 +1,6 @@
 package art.example.api.data
 
-import art.example.database.TagEntity
+import art.example.database.entities.TagEntity
 import kotlinx.serialization.Serializable
 
 
