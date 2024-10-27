@@ -88,6 +88,7 @@ class UserViewModel(
         }
     }
 
+
     fun getCurrentUser() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -119,7 +120,21 @@ class UserViewModel(
                 Log.e("FLOW", "ERROR with adding post: $post to folder: $folder")
             }
         }
+    }
 
+
+    fun deletePostFromFolder(post: Post, folder: Folder) {
+        viewModelScope.launch {
+            try {
+                Log.d("FLOW", "Deleting post: $post from the folder: $folder")
+                val newFolder = userRepository.deletePostFromFolder(folder, post)
+                _selectedFolder.value = newFolder
+                Log.d("FLOW", "New selected folder $selectedFolder")
+            } catch (e: Exception) {
+                Log.e("FLOW", "Error deleting post: $post from folder: $folder")
+                _errorMessage.value = "Error deleting post. Please try again."
+            }
+        }
     }
 
 

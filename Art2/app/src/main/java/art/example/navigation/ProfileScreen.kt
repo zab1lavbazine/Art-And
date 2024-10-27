@@ -45,8 +45,7 @@ import art.example.api.data.Post
 import art.example.api.data.User
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
-
-
+import org.koin.androidx.compose.viewModel
 
 
 @Composable
@@ -173,7 +172,11 @@ fun UserCard(user: User) {
 
 
 @Composable
-fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
+fun UserPostsList(
+    usersPosts: List<Post>?,
+    navController: NavHostController,
+    menuItems: List<MenuItem> = emptyList()
+) {
 
     if (usersPosts.isNullOrEmpty()){
         Box(
@@ -195,7 +198,9 @@ fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
                     PostCard(post = post, onClick = {
                         // Navigate to post details when the post is clicked
                         navController.navigate(Screen.PostDetail.createRoute(post.id)) // Use the post ID to navigate
-                    })
+                    },
+                        menuItems = menuItems
+                    )
             }
         }
     }

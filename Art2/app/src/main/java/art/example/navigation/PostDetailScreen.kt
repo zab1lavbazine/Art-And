@@ -1,6 +1,5 @@
 package art.example.navigation
 
-import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -8,7 +7,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +16,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -51,12 +51,17 @@ import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
 import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.lazy.items
+
 
 import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun PostDetailScreen(postId: Long, navController: NavHostController) {
+fun PostDetailScreen(
+    postId: Long,
+    navController: NavHostController
+) {
     // Get the view model for this screen
     val viewModel: PostViewModel = koinViewModel()
     val userViewModel: UserViewModel = koinViewModel()
@@ -232,27 +237,39 @@ fun PostCardItem(
 
 @Composable
 fun FolderSelectionDialog(
-    userFolders : List<Folder>,
+    userFolders: List<Folder>,
     onDismiss: () -> Unit,
     onFolderSelected: (Folder) -> Unit
 ) {
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = "Select Folder") },
         text = {
-            Column {
-                userFolders.forEach { folder ->
-                    Text(
-                        text = folder.title,
+            LazyColumn(
+                modifier = Modifier
+                    .heightIn(min = 100.dp) // Optional: set a minimum height
+            ) {
+                // Correct usage of items for a list of folders
+                items(userFolders) { folder ->
+                    Box(
                         modifier = Modifier
                             .padding(8.dp)
                             .fillMaxWidth()
                             .clickable {
-                                Log.d("FLOW", "Folder clicked $folder")
                                 onFolderSelected(folder)
                             }
-                    )
+                            .background(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = folder.title,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
         },
@@ -263,6 +280,7 @@ fun FolderSelectionDialog(
         }
     )
 }
+
 
 
 @Composable

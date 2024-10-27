@@ -1,6 +1,5 @@
 package art.example.navigation
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,19 +11,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
+import art.example.api.data.Post
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun FolderDetailScreen(folderId: Long, navController: NavController) {
-    val viewModel: UserViewModel = koinViewModel()
-    val selectedFolder by viewModel.selectedFolder.observeAsState()
-    val isLoadingFolder by viewModel.isLoadingFolder.observeAsState(initial = false)
-    val errorMessage by viewModel.errorMessage.observeAsState()
+fun FolderDetailScreen(
+    folderId: Long,
+    navController: NavController
+) {
+    val userViewModel: UserViewModel = koinViewModel()
+    val selectedFolder by userViewModel.selectedFolder.observeAsState()
+    val isLoadingFolder by userViewModel.isLoadingFolder.observeAsState(initial = false)
+    val errorMessage by userViewModel.errorMessage.observeAsState()
 
     // Fetch folder details when the folderId changes
     LaunchedEffect(folderId) {
-        viewModel.getDetailedFolder(folderId)
+        userViewModel.getDetailedFolder(folderId)
     }
 
     Scaffold(
@@ -83,9 +86,21 @@ fun FolderDetailScreen(folderId: Long, navController: NavController) {
                         contentPadding = PaddingValues(8.dp)
                     ) {
                         items(folder.posts ?: emptyList()) { post ->
-                            PostCard(post = post, onClick = {
-                                navController.navigate(Screen.PostDetail.createRoute(post.id))
-                            })
+                            val menuItems = listOf(
+                                MenuItem(
+                                    label = "Delete post",
+                                    onClick = {
+                                        userViewModel.deletePostFromFolder(post, folder)
+                                    }
+                                )
+                            )
+                            PostCard(
+                                post = post,
+                                onClick = {
+                                    navController.navigate(Screen.PostDetail.createRoute(post.id))
+                                },
+                                menuItems = menuItems
+                            )
                         }
                     }
                 } ?: run {

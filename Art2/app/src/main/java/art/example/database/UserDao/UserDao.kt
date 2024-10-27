@@ -48,7 +48,7 @@ interface UserDao {
 
 
     @Query("SELECT * FROM folders WHERE folderId = :folderId")
-    suspend fun getFolderById(folderId: Long) : FolderEntity
+    suspend fun getFolderById(folderId: Long) : FolderEntity?
 
     @Query("SELECT * FROM folders WHERE folderId = :folderId")
     suspend fun getDetailedFolderById(folderId: Long): FolderWithPosts

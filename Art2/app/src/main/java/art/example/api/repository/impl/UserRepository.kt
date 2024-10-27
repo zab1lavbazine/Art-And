@@ -20,6 +20,7 @@ import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
 import art.example.database.entities.FolderWithPostsCrossRef
+import art.example.database.entities.PostEntity
 import art.example.database.entities.UserEntity
 import art.example.database.entities.UserWithTagsCrossRef
 import art.example.database.entities.toFolder
@@ -85,9 +86,11 @@ class UserRepository(
             Log.d("FLOW", "Fetched user folders from DB: $userFolders")
             if (userFolders.isNullOrEmpty()){
                 val folders = folderApiService.getFoldersByUser()
-                folders.forEach { folder -> folder.user = currentUser }
+                folders.forEach { folder ->
+                    folder.user = currentUser
+                    saveFolder(folder)
+                }
                 Log.d("FLOW", "FOLDERS FROM API: $folders")
-                userDao.insertFolders(folders.map { it.toFolderEntity() })
                 folders
             } else {
                 userFolders.map { it.toFolder() }
@@ -99,9 +102,11 @@ class UserRepository(
         }
 
 
+
     suspend fun getFolderById(folderId: Long): Folder? {
         return try {
             val localFolder = userDao.getFolderById(folderId)
+            Log.d("FLOW", "get folder by id: $folderId, localFolder: $localFolder")
             if (localFolder != null) {
                 val detailedFolder = userDao.getDetailedFolderById(folderId)
                 val userInFolder = detailedFolder.folderEntity.userFolderId?.let {
@@ -122,6 +127,7 @@ class UserRepository(
                 folder
             } else {
                 val apiFolder = folderApiService.getFolderById(folderId)
+                saveFolder(apiFolder!!)
                 apiFolder
             }
         } catch (e : Exception){
@@ -149,18 +155,41 @@ class UserRepository(
             }
     }
 
+
+    @Transaction
+    suspend fun deletePostFromFolder(folder: Folder, post: Post): Folder?{
+        return try {
+            if (!folder.posts?.contains(post)!!){
+                Log.d("FLOW", "Folder do not have that post")
+                null
+            } else {
+                folder.posts!!.remove(post)
+                val folderDTO = folder.toFolderDTO()
+                val newFolder = folderApiService.updateFolder(folder.id, folderDTO)
+                Log.d("FLOW", "deleting post: $post from folder")
+                Log.d("FLOW", "new folder after deleting folder: $newFolder")
+                saveFolder(newFolder!!)
+                newFolder
+            }
+        } catch (e: Exception) {
+            Log.e("FLOW", "ERROR with deleting post from folder")
+            null
+        }
+    }
+
     private suspend fun saveFolder(folder: Folder) {
         withContext(Dispatchers.IO){
             try {
+                // inserting folder in the database
                 val folderEntity = folder.toFolderEntity()
                 userDao.insertFolder(folderEntity)
 
+                // creating connection between folder and posts
                 val foldersWithPosts = folder.posts?.map { post ->
                     FolderWithPostsCrossRef(folder.id, post.id)
                 }
                 foldersWithPosts?.let { postDao.insertFoldersWithPosts(foldersWithPosts) }
 
-                userDao.insertFolder(folderEntity)
             } catch (e : Exception){
                 Log.e("FLOW", "error with saving new folder")
             }
@@ -172,11 +201,10 @@ class UserRepository(
 
     suspend fun createFolder(title: String, description: String): Folder? {
         return try {
+            // creating folder dto to send to the api
             val folderDTO = FolderDTO(title, description, emptyList())
             val folder = folderApiService.createFolder(folderDTO)
-            if (folder != null) {
-                userDao.insertFolder(folder.toFolderEntity())
-            }
+            saveFolder(folder!!)
             folder
         } catch (e: Exception) {
             Log.e("FLOW", "Error creating folder: ${e.message}", e)
@@ -191,19 +219,7 @@ class UserRepository(
         return try {
             val user = userApiService.getUserAccount() // Fetch from API
             Log.d("FLOW", "Fetched user from API: $user")
-            user?.let {
-                // insert user in the database
-                userDao.insertUser(UserEntity(it.id, it.username, it.email))
-                //insert posts in the database
-                it.posts?.let { posts ->
-                    postDao.insertPosts(posts.map { post -> post.toPostEntity(user.id) })
-                }
-
-                // insert tags
-                it.preferredTags?.let { tags -> tagDao.insertTags(tags.map { tag -> tag.toTagEntity() }) }
-                it.preferredTags?.forEach{ tags -> userDao.insertUserWithTag(UserWithTagsCrossRef(user.id, tags.id)) }
-            } // Save to DB new folders
-
+            createUser(user!!)
             // return user
             user
         } catch (e: Exception) {
@@ -220,6 +236,27 @@ class UserRepository(
             user.posts = postsWithDetails.map { it.toPost() }
 
             user
+        }
+    }
+
+    private suspend fun createUser(user: User){
+        withContext(Dispatchers.IO){
+            try {
+                user.let {
+                    // insert user in the database
+                    userDao.insertUser(it.toUserEntity())
+                    //insert posts in the database
+                    it.posts?.let { posts ->
+                        postDao.insertPosts(posts.map { post -> post.toPostEntity(user.id) })
+                    }
+
+                    // insert tags
+                    it.preferredTags?.let { tags -> tagDao.insertTags(tags.map { tag -> tag.toTagEntity() }) }
+                    it.preferredTags?.forEach{ tags -> userDao.insertUserWithTag(UserWithTagsCrossRef(user.id, tags.id)) }
+                } // Save to DB new folders
+            } catch (e : Exception){
+                Log.e("FLOW", "error with creating user")
+            }
         }
     }
 
@@ -242,11 +279,12 @@ class UserRepository(
 
             // Save the user credentials
             if (loggedInUser != null) {
+                Log.d("FLOW", "CURRENT user : $loggedInUser")
                 saveUserCredentials(loggedInUser, password)
                 currentUser = loggedInUser // Cache the current user
 
                 // Save the logged-in user to local database
-                userDao.insertUser(UserEntity(loggedInUser.id, loggedInUser.username, loggedInUser.email))
+                userDao.insertUser(loggedInUser.toUserEntity())
             }
             loggedInUser
         } catch (e: HttpException) {
