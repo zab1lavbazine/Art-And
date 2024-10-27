@@ -2,8 +2,10 @@ package art.example.api.repository.impl
 
 import android.content.Context
 import android.util.Log
+import androidx.room.Transaction
 import art.example.api.data.DTO.FolderDTO
 import art.example.api.data.Folder
+import art.example.api.data.Post
 import com.google.android.gms.auth.api.credentials.Credentials
 import com.google.android.gms.auth.api.credentials.CredentialsClient
 import art.example.api.data.User
@@ -11,19 +13,19 @@ import art.example.api.data.toFolderEntity
 import art.example.api.data.toPostEntity
 import art.example.api.data.toTagEntity
 import art.example.api.reponses.UserCredentials
-import art.example.api.repository.IUserApiService
+import art.example.api.repository.IUserRepository
 import art.example.api.service.FolderApiService
 import art.example.api.service.UserApiService
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
+import art.example.database.entities.FolderWithPostsCrossRef
 import art.example.database.entities.UserEntity
-import art.example.database.entities.UserWithFolders
-import art.example.database.entities.UserWithPosts
-import art.example.database.entities.UserWithTags
 import art.example.database.entities.UserWithTagsCrossRef
 import art.example.database.entities.toFolder
 import art.example.database.entities.toTag
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
 class UserRepository(
@@ -33,7 +35,7 @@ class UserRepository(
     private val tagDao: TagDao,
     private val postDao: PostDao,
     private val folderApiService: FolderApiService
-) : IUserApiService {
+) : IUserRepository {
 
     private var currentUser: User? = null
     private var authToken: String? = null
@@ -110,7 +112,8 @@ class UserRepository(
                 val folder = detailedFolder.toFolder()
                 val postsFromFolder =
                     postDao.getDetailedPostsById(detailedFolder.posts.map { it.postId })
-                folder.posts = postsFromFolder.map { it.toPost() }
+                folder.posts = postsFromFolder.map { it.toPost() }.toMutableList()
+
                 if (userInFolder != null) {
                     folder.user = userInFolder.toUser()
                 }
@@ -127,6 +130,42 @@ class UserRepository(
         }
     }
 
+
+
+    @Transaction
+    suspend fun updateFolderWithPost(folder: Folder, post: Post): Folder?{
+            return try {
+                // check folder for that post in the posts
+                if (!folder.posts?.contains(post)!!) {
+                    folder.posts = (folder.posts ?: mutableListOf()).apply { add(post) }
+                    val folderDTO = folder.toFolderDTO()
+                    val newFolder = folderApiService.updateFolder(folder.id, folderDTO)
+                    saveFolder(newFolder!!)
+                }
+                folder
+            } catch (e: Exception) {
+                Log.e("FLOW", "ERROR with updating folder with post")
+                null
+            }
+    }
+
+    private suspend fun saveFolder(folder: Folder) {
+        withContext(Dispatchers.IO){
+            try {
+                val folderEntity = folder.toFolderEntity()
+                userDao.insertFolder(folderEntity)
+
+                val foldersWithPosts = folder.posts?.map { post ->
+                    FolderWithPostsCrossRef(folder.id, post.id)
+                }
+                foldersWithPosts?.let { postDao.insertFoldersWithPosts(foldersWithPosts) }
+
+                userDao.insertFolder(folderEntity)
+            } catch (e : Exception){
+                Log.e("FLOW", "error with saving new folder")
+            }
+        }
+    }
 
 
 
@@ -147,6 +186,7 @@ class UserRepository(
 
 
     // Get a specific user either from the API or fallback to the local database
+    @Transaction
     suspend fun getUserAccount(id: Long): User? {
         return try {
             val user = userApiService.getUserAccount() // Fetch from API

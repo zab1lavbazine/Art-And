@@ -12,10 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
-import art.example.api.data.Post
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
-import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun FolderDetailScreen(folderId: Long, navController: NavController) {
@@ -71,7 +69,7 @@ fun FolderDetailScreen(folderId: Long, navController: NavController) {
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = folder.description ?: "No description available.",
+                                text = folder.description,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -86,7 +84,6 @@ fun FolderDetailScreen(folderId: Long, navController: NavController) {
                     ) {
                         items(folder.posts ?: emptyList()) { post ->
                             PostCard(post = post, onClick = {
-                                // Navigate to the PostDetail screen when the post is clicked
                                 navController.navigate(Screen.PostDetail.createRoute(post.id))
                             })
                         }

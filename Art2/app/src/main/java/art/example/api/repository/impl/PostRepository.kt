@@ -1,26 +1,18 @@
 package art.example.api.repository.impl
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import art.example.api.data.*
-import art.example.api.data.DTO.InMemoryMultipartFile
-import art.example.api.data.DTO.MultipartFile
 import art.example.api.data.DTO.PostDTO
-import art.example.api.repository.IPostApiService
+import art.example.api.repository.IPostRepository
 import art.example.api.service.PostApiService
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
 import art.example.database.entities.PostWithTags
 import art.example.database.entities.toTag
-import coil.ImageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 
 class PostRepository(
     private val postApiService: PostApiService, // API Service
@@ -28,7 +20,7 @@ class PostRepository(
     private val tagDao: TagDao, // Tag DAO
     private val userDao: UserDao,
     private val context : Context
-) : IPostApiService {
+) : IPostRepository {
 
     // In-memory cache
     private val postsCache = mutableListOf<Post>()
@@ -68,10 +60,16 @@ class PostRepository(
     }
 
     override suspend fun getPostById(id: Long): Post? {
-        // Fetch a single post from cache or database
-        return postsCache.find { it.id == id } ?: withContext(Dispatchers.IO) {
-            postDao.getPostWithTagsAndImage(id)?.toPost() // Convert PostWithTags to Post
+            // Fetch a single post from cache or database
+            Log.d("FLOW", "FETCHING POST WITH ID : $id")
+            var localPost = postsCache.find{ it.id == id}
+        if (localPost == null) {
+            localPost = postDao.getPostWithTagsAndImage(id)
+                ?.toPost()
+            Log.d("FLOW", "Post from postDao $localPost")
+            localPost?.let {postsCache.add(localPost)}
         }
+        return localPost
     }
 
     // Save post, tags, and images into the database

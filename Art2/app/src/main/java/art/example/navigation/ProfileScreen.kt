@@ -69,7 +69,7 @@ fun MyProfile(navController: NavHostController) {
     }
 
     LaunchedEffect(selectedTabIndex.intValue) {
-        if (selectedTabIndex.intValue == 1){
+        if (selectedTabIndex.intValue == 1) {
             Log.d("FLOW", "Loading user folders")
             userViewModel.getUserFolders()
         }
@@ -206,11 +206,6 @@ fun UserPostsList(usersPosts: List<Post>?, navController: NavHostController) {
 @Composable
 fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController, isLoadingPost: Boolean) {
 
-    CreateFolderButton(onClick = {
-        // Handle the logic to create a new folder here
-        navController.navigate(Screen.CreateFolder.route) // Navigate to create folder screen
-    })
-
     if (isLoadingPost){
         Box(
             modifier = Modifier
@@ -221,34 +216,44 @@ fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController,
         }
     } else {
     // Implement your user folders list UI here
-    if (userFolders.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .wrapContentSize(Alignment.Center)
-        ) {
-            Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
-        }
-    }else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(8.dp)
+        if (userFolders.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
             ) {
-                items(userFolders) { folder ->
-                    FolderCard(folder = folder, onClick = {navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))})
-                }
+                Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
             }
+        } else {
+                LazyVerticalGrid (
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    items(userFolders) { folder ->
+                        FolderCard(folder = folder, onClick = {navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))})
+                    }
+                }
+
+            CreateFolderButton(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                onClick = {
+                    navController.navigate(Screen.CreateFolder.route)
+                }
+            )
         }
     }
 }
 
 
 @Composable
-fun FolderCard(folder: Folder, onClick : () -> Unit) {
+fun FolderCard(
+    folder: Folder,
+    onClick : () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
             .padding(8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
@@ -265,7 +270,11 @@ fun FolderCard(folder: Folder, onClick : () -> Unit) {
 }
 
 @Composable
-fun CreateFolderButton(onClick: () -> Unit) {
+fun CreateFolderButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -277,13 +286,11 @@ fun CreateFolderButton(onClick: () -> Unit) {
         border = BorderStroke(1.dp, Color.Gray)
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp), // Adjust padding as needed
+            modifier = modifier,
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "+ Create New Folder",
+                text = "+",
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.primary
             )

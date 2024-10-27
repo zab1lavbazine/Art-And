@@ -6,6 +6,9 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,14 +19,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,11 +45,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import art.example.ViewModel.PostViewModel
+import art.example.ViewModel.UserViewModel
+import art.example.api.data.Folder
 import art.example.api.data.Post
-import art.example.api.data.Tag
 import coil.compose.rememberAsyncImagePainter
 
 import org.koin.androidx.compose.koinViewModel
@@ -47,15 +59,27 @@ import org.koin.androidx.compose.koinViewModel
 fun PostDetailScreen(postId: Long, navController: NavHostController) {
     // Get the view model for this screen
     val viewModel: PostViewModel = koinViewModel()
+    val userViewModel: UserViewModel = koinViewModel()
 
     // Observe the selected post and loading state
     val selectedPost by viewModel.selectedPost.observeAsState()
     val isLoading by viewModel.isLoading.observeAsState(initial = true) // Use an initial value
 
+
+    // for the folder dialog
+    val userFolders by userViewModel.userFolders.observeAsState(emptyList())
+    val showDialog = remember { mutableStateOf(false) }
+
     // Load the post details when the postId changes
     LaunchedEffect(postId) {
-        Log.d("PostDetailScreen", "Loading post with ID: $postId")
         viewModel.loadById(postId)
+    }
+
+    LaunchedEffect(showDialog.value) {
+        if (showDialog.value) {
+            Log.d("FLOW", "Loading user folders")
+            userViewModel.getUserFolders()
+        }
     }
 
     // Create the Scaffold for the screen layout
@@ -65,27 +89,138 @@ fun PostDetailScreen(postId: Long, navController: NavHostController) {
                 title = "Post details",
                 showBackButton = true,
                 onSearchClicked = { /* Handle search */ },
-                onMoreClicked = { /* Handle more options */ }
+                onMoreClicked = { /*  more options */ },
+                onBackClicked = { navController.popBackStack() }
             )
         },
         bottomBar = {
             BottomNavigationBar(navController = navController)
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            when {
-                isLoading -> {
-                    // Show loading state
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center)) // Use a progress indicator
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                selectedPost?.let { post ->
+                            PostCardItem(
+                                post = post,
+                                onAddToFolderClick = { selectedFolder ->
+                                    userViewModel.savePostInFolder(post, selectedFolder)
+                                    showDialog.value = false // Hide dialog after saving
+                                },
+                                showDialog = showDialog,
+                                userFolders = userFolders
+                            )
+                        }
+                    }
                 }
-                selectedPost != null -> {
-                    // Show the post details
-                    PostCardItem(post = selectedPost!!)
+
+            }
+        }
+
+
+
+@Composable
+fun PostCardItem(
+    post: Post,
+    onAddToFolderClick: (Folder) -> Unit,
+    showDialog: MutableState<Boolean>,
+    userFolders: List<Folder>
+) {
+    // Wrap the Column with verticalScroll
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // Load image from URL or ByteArray
+        if (post.imageUrl != null) {
+            Image(
+                painter = rememberAsyncImagePainter(post.imageUrl),
+                contentDescription = "Post Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.8f),
+                contentScale = ContentScale.Fit
+            )
+        } else if (post.image != null) {
+            val imageBitmap = byteArrayToImageBitmap(post.image.data)
+            Image(
+                bitmap = imageBitmap,
+                contentDescription = "Post Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.8f),
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            // Placeholder in case there's no image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.8f)
+                    .background(Color.Gray) // Placeholder color
+            ) {
+                Text(
+                    text = "No Image Available",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.White
+                )
+            }
+        }
+
+        // Post details
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text(
+                text = post.title,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = post.description,
+                fontSize = 16.sp,
+                color = Color.LightGray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                post.tags?.forEach { tag ->
+                    TagBox(tag.name)
                 }
-                else -> {
-                    // Post not found or could not load
-                    Text(text = "Post not found", modifier = Modifier.align(Alignment.Center))
-                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Add button at the bottom of the Box
+            Button(
+                onClick = { showDialog.value = true },
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .padding(bottom = 16.dp) // Add padding from bottom
+            ) {
+                Text(text = "Add to Folder")
+            }
+
+            // Folder Selection Dialog
+            if (showDialog.value) {
+                FolderSelectionDialog(
+                    userFolders = userFolders,
+                    onDismiss = { showDialog.value = false },
+                    onFolderSelected = { selectedFolder ->
+                        onAddToFolderClick(selectedFolder)
+                    }
+                )
             }
         }
     }
@@ -93,81 +228,40 @@ fun PostDetailScreen(postId: Long, navController: NavHostController) {
 
 
 
+
+
 @Composable
-fun PostCardItem(post: Post) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Load image from URL or ByteArray
-            if (post.imageUrl != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(post.imageUrl),
-                    contentDescription = "Post Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.8f),
-                    contentScale = ContentScale.Fit
-                )
-            } else if (post.image != null) {
-                val imageBitmap = byteArrayToImageBitmap(post.image.data)
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = "Post Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.8f),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                // Placeholder in case there's no image
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.8f)
-                        .background(Color.Gray) // Placeholder color
-                ) {
+fun FolderSelectionDialog(
+    userFolders : List<Folder>,
+    onDismiss: () -> Unit,
+    onFolderSelected: (Folder) -> Unit
+) {
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Select Folder") },
+        text = {
+            Column {
+                userFolders.forEach { folder ->
                     Text(
-                        text = "No Image Available",
-                        modifier = Modifier.align(Alignment.Center),
-                        color = Color.White
+                        text = folder.title,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth()
+                            .clickable {
+                                Log.d("FLOW", "Folder clicked $folder")
+                                onFolderSelected(folder)
+                            }
                     )
                 }
             }
-
-            // Post details
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.2f)
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = post.title,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = post.description,
-                    fontSize = 16.sp,
-                    color = Color.LightGray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height((4.dp)))
-                Row(modifier = Modifier.fillMaxWidth()){
-                    post.tags?.forEach{ tag ->
-                        TagBox(tag.name)
-                    }
-                }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
-    }
+    )
 }
 
 

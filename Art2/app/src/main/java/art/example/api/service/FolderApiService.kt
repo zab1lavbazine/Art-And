@@ -5,6 +5,8 @@ import art.example.api.data.Folder
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface FolderApiService {
 
@@ -13,11 +15,14 @@ interface FolderApiService {
     suspend fun getFolders(): List<Folder>
 
     @GET("/api/folders/{id}")
-    suspend fun getFolderById(id: Long): Folder?
+    suspend fun getFolderById(@Path("id") id: Long): Folder?
 
     @GET("/api/folders/user")
     suspend fun getFoldersByUser(): List<Folder>
 
     @POST("/api/folders")
     suspend fun createFolder( @Body folderDTO: FolderDTO): Folder?
+
+    @PUT("/api/folders/{id}")
+    suspend fun updateFolder(@Path("id") folderId: Long, @Body folderDTO: FolderDTO) : Folder?
 }

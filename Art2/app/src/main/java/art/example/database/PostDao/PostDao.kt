@@ -1,6 +1,8 @@
 package art.example.database.PostDao
 
 import androidx.room.*
+import art.example.database.entities.FolderWithPosts
+import art.example.database.entities.FolderWithPostsCrossRef
 import art.example.database.entities.ImageEntity
 import art.example.database.entities.PostEntity
 import art.example.database.entities.PostWithTags
@@ -31,7 +33,7 @@ interface PostDao {
 
     @Transaction
     @Query("SELECT * FROM posts WHERE postId IN (:posts)")
-    suspend fun getDetailedPostsById(posts: List<Long>): List<PostWithTagsAndImage>
+    suspend fun getDetailedPostsById(posts: List<Long>): MutableList<PostWithTagsAndImage>
 
 
     @Transaction
@@ -45,4 +47,11 @@ interface PostDao {
 
     @Query("DELETE FROM posts" )
     suspend fun deleteAllPosts()
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFolderWithPost(folderWithPost: FolderWithPostsCrossRef)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFoldersWithPosts(foldersWithPosts : List<FolderWithPostsCrossRef>)
 }

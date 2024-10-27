@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import art.example.api.data.Folder
+import art.example.api.data.Post
 import art.example.api.data.User
 import art.example.api.reponses.UserCredentials
 import kotlinx.coroutines.launch
@@ -107,6 +108,18 @@ class UserViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+
+    fun savePostInFolder(post: Post, folder: Folder){
+        viewModelScope.launch {
+            try {
+                userRepository.updateFolderWithPost(folder, post)
+            }catch (e : Exception){
+                Log.e("FLOW", "ERROR with adding post: $post to folder: $folder")
+            }
+        }
+
     }
 
 

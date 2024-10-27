@@ -30,6 +30,4 @@ val appModules = module {
     viewModel { UserViewModel(get(), androidContext()) }
     viewModel { PostViewModel(get(), androidContext()) }
 
-
-
 }

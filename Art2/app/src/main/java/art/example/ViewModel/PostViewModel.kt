@@ -21,7 +21,7 @@ class PostViewModel(
 
     // for the selected post, it will update and then be present for the UI
     private val _selectedPost = MutableLiveData<Post?>()
-    val selectedPost: LiveData<Post?> get() = _selectedPost
+    val selectedPost: MutableLiveData<Post?> get() = _selectedPost
 
     private val _posts = MutableLiveData<List<Post>>()
     val posts : LiveData<List<Post>> get() = _posts
@@ -51,10 +51,6 @@ class PostViewModel(
         }
     }
 
-    private fun getAuthToken(): String? {
-        return sharedPreferences.getString("auth_token", null)
-    }
-
     fun loadById(id: Long) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -62,7 +58,7 @@ class PostViewModel(
                 val post = postRepository.getPostById(id)
                 _selectedPost.value = post
             } catch (e: Exception) {
-                // Handle
+                Log.d("FLOW", "EXCEPTION while getting post by id : $id")
                 _selectedPost.value = null
             } finally {
                 _isLoading.value = false
