@@ -12,6 +12,7 @@ import art.example.api.data.User
 import art.example.api.data.toFolderEntity
 import art.example.api.data.toPostEntity
 import art.example.api.data.toTagEntity
+import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
 import art.example.api.repository.IUserRepository
 import art.example.api.service.FolderApiService
@@ -28,6 +29,7 @@ import art.example.database.entities.toTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import java.security.MessageDigest
 
 class UserRepository(
     private val userApiService: UserApiService,
@@ -166,9 +168,9 @@ class UserRepository(
                 folder.posts!!.remove(post)
                 val folderDTO = folder.toFolderDTO()
                 val newFolder = folderApiService.updateFolder(folder.id, folderDTO)
-                Log.d("FLOW", "deleting post: $post from folder")
                 Log.d("FLOW", "new folder after deleting folder: $newFolder")
                 saveFolder(newFolder!!)
+                postDao.deletePostWithFolder(folderId = folder.id, postId = post.id)
                 newFolder
             }
         } catch (e: Exception) {
@@ -193,6 +195,16 @@ class UserRepository(
             } catch (e : Exception){
                 Log.e("FLOW", "error with saving new folder")
             }
+        }
+    }
+
+
+    suspend fun register(userCred: RegisterUserDTO){
+        withContext(Dispatchers.IO){
+                val newHashedPassword = hashFunction(userCred.password)
+                userCred.password = newHashedPassword
+                userApiService.register(userCred)
+                Log.d("FLOW","Registration successfull")
         }
     }
 
@@ -261,7 +273,8 @@ class UserRepository(
     }
 
     override suspend fun login(username: String, password: String): User? {
-        val credentials = UserCredentials(username, password)
+        val newPassword = hashFunction(password)
+        val credentials = UserCredentials(username, newPassword)
         return try {
             Log.d("FLOW", "Logging in user: ${credentials.username} and ${credentials.password}")
 
@@ -310,5 +323,11 @@ class UserRepository(
     private fun clearSavedCredentials() {
         sharedPreferences.edit().clear().apply()
         credentialsClient.disableAutoSignIn()
+    }
+
+
+    private fun hashFunction(password: String): String{
+        val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
+        return bytes.joinToString("") { "%02x".format(it)}
     }
 }

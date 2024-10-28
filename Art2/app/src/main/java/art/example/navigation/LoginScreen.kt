@@ -1,5 +1,6 @@
 package art.example.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -27,8 +30,12 @@ import art.example.screen.Screen
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Unit) {
+fun LoginScreen(
+    navController: NavHostController,
+    onLoginSuccess: (String) -> Unit
+) {
     val userViewModel: UserViewModel = koinViewModel()
 
     val savedUser = userViewModel.getSavedUser()
@@ -39,51 +46,52 @@ fun LoginScreen(navController: NavHostController, onLoginSuccess: (String) -> Un
     // Observe error message from ViewModel
     val errorMessage by userViewModel.errorMessage.observeAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
 
-        TextField(
-            value = username,
-            onValueChange = { username = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Username") },
-            placeholder = { Text("Enter your username") },
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Password") },
-            placeholder = { Text("Enter your password") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
 
-        // Display error message if there's one
-        errorMessage?.let {
-            if (it.isNotEmpty()) {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+            TextField(
+                value = username,
+                onValueChange = { username = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Username") },
+                placeholder = { Text("Enter your username") },
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(
+                value = password,
+                onValueChange = { password = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Password") },
+                placeholder = { Text("Enter your password") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true
+            )
+
+            // Display error message if there's one
+            errorMessage?.let {
+                if (it.isNotEmpty()) {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                userViewModel.login(username, password) { token ->
+                    onLoginSuccess(token) // Call the success callback
+                    navController.navigate(Screen.PostsScreen.route) // Navigate to PostsScreen on successful login
+                }
+            }) {
+                Text(text = if (isLoading) "Logging in..." else "Login")
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            userViewModel.login(username, password) { token ->
-                onLoginSuccess(token) // Call the success callback
-                navController.navigate(Screen.PostsScreen.route) // Navigate to PostsScreen on successful login
-            }
-        }) {
-            Text(text = if (isLoading) "Logging in..." else "Login")
-        }
-    }
 }

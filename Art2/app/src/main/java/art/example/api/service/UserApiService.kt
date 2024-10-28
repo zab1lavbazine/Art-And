@@ -2,7 +2,9 @@ package art.example.api.service
 
 import art.example.api.data.User
 import art.example.api.reponses.LoginResponse
+import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
+import art.example.screen.Screen
 import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -21,8 +23,8 @@ interface UserApiService {
     @Headers("Content-Type: application/json")
     suspend fun login(@Body credentials: UserCredentials): LoginResponse
 
-    @POST("/api/auth/register")
-    suspend fun register(@Body credentials: UserCredentials): LoginResponse
+    @POST("/api/auth/signup")
+    suspend fun register(@Body credentials: RegisterUserDTO)
 
     @GET("/api/users/account")
     suspend fun getUserByUsername(): User?

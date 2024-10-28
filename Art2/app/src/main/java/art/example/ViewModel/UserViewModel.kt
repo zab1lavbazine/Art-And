@@ -10,8 +10,10 @@ import androidx.lifecycle.viewModelScope
 import art.example.api.data.Folder
 import art.example.api.data.Post
 import art.example.api.data.User
+import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
 import kotlinx.coroutines.launch
+import java.security.MessageDigest
 
 class UserViewModel(
     private val userRepository: UserRepository,
@@ -161,6 +163,22 @@ class UserViewModel(
     }
 
 
+    fun register(email : String, username: String, password: String, onRegisterSuccess: () -> Unit ){
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val registerUser = RegisterUserDTO(email = email, username = username, password = password)
+                userRepository.register(registerUser)
+                Log.d("FLOW", "REGISTRATION successfully")
+                onRegisterSuccess()
+            } catch (e : Exception){
+                Log.e("FLOW", "Error with registration")
+                _errorMessage.value = "Registration failed, please try again"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
     fun login(username: String, password: String, onLoginSuccess: (String) -> Unit) {
         _isLoading.value = true
@@ -216,4 +234,5 @@ class UserViewModel(
             apply() // Save changes
         }
     }
+
 }

@@ -31,7 +31,7 @@ import art.example.database.entities.UserWithTagsCrossRef
         FolderEntity::class,
         FolderWithPostsCrossRef::class,
                ],
-    version = 2 // Increment the version number
+    version = 1 // Increment the version number
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

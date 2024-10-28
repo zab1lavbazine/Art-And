@@ -14,3 +14,11 @@ data class LoginResponse(
     // expiration date in milliseconds
     val expiresIn: Long
 )
+
+
+@Serializable
+data class RegisterUserDTO(
+    val email: String,
+    val username: String,
+    var password: String
+)

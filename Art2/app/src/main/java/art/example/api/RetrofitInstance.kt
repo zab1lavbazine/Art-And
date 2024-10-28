@@ -22,10 +22,7 @@ object RetrofitInstance {
         this.context = context
     }
 
-    private const val BASE_URL: String = "http://arthub-backend-git-kindiole-dev.apps.sandbox-m3.1530.p1.openshiftapps.com"
-
-    // localhost
-//    private const val BASE_URL: String = "http://localhost:8080"
+    private const val BASE_URL: String = "http://arthub-backend-dev-kindiole-dev.apps.sandbox-m3.1530.p1.openshiftapps.com"
 
     // Create OkHttpClient with the interceptor
     private fun getOkHttpClient(context: Context): OkHttpClient {
@@ -89,6 +86,6 @@ object RetrofitInstance {
     }
 
     private fun isAuthEndpoint(url: String): Boolean {
-        return url.contains("login", ignoreCase = true) || url.contains("register", ignoreCase = true)
+        return url.contains("login", ignoreCase = true) || url.contains("signup", ignoreCase = true)
     }
 }

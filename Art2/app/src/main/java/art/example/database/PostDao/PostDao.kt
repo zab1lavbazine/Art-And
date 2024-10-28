@@ -52,6 +52,10 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFolderWithPost(folderWithPost: FolderWithPostsCrossRef)
 
+    @Transaction
+    @Query("DELETE FROM FolderWithPostsCrossRef WHERE folderId = :folderId AND postId = :postId")
+    suspend fun deletePostWithFolder(folderId: Long, postId: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFoldersWithPosts(foldersWithPosts : List<FolderWithPostsCrossRef>)
 }

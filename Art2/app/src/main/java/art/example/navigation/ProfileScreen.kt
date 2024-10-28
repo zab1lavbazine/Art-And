@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -209,44 +210,65 @@ fun UserPostsList(
 
 
 @Composable
-fun UserFoldersList(userFolders: List<Folder>, navController: NavHostController, isLoadingPost: Boolean) {
-
-    if (isLoadingPost){
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        }
-    } else {
-    // Implement your user folders list UI here
-        if (userFolders.isEmpty()) {
+fun UserFoldersList(
+    userFolders: List<Folder>,
+    navController: NavHostController,
+    isLoadingPost: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        if (isLoadingPost) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentSize(Alignment.Center)
+                    .fillMaxWidth()
+                    .weight(1f),  // Take up available vertical space
+                contentAlignment = Alignment.Center
             ) {
-                Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
+                CircularProgressIndicator()
             }
         } else {
-                LazyVerticalGrid (
+            if (userFolders.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .wrapContentSize(Alignment.Center)
+                ) {
+                    Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
+                }
+            } else {
+                LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),  // Take up available vertical space
                     contentPadding = PaddingValues(8.dp)
                 ) {
                     items(userFolders) { folder ->
-                        FolderCard(folder = folder, onClick = {navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))})
+                        FolderCard(
+                            folder = folder,
+                            onClick = {
+                                navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))
+                            }
+                        )
                     }
                 }
-
-            CreateFolderButton(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                onClick = {
-                    navController.navigate(Screen.CreateFolder.route)
-                }
-            )
+            }
         }
+
+        // Create Folder Button
+        CreateFolderButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            onClick = {
+                navController.navigate(Screen.CreateFolder.route)
+            }
+        )
     }
 }
 
