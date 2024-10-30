@@ -139,6 +139,17 @@ class UserViewModel(
         }
     }
 
+    fun deleteFolderById(folderId : Long){
+        viewModelScope.launch {
+            try {
+                Log.d("FLOW", "DELETING folder with id: $folderId")
+                userRepository.deleteFolderById(folderId)
+            } catch (e: Exception){
+                Log.d("FLOW", "Error while deleting folder by id: $folderId")
+            }
+        }
+    }
+
 
     fun createFolder(title: String, description: String) {
         viewModelScope.launch {
@@ -158,6 +169,20 @@ class UserViewModel(
                 _errorMessage.value = "Failed to create folder. Please try again."
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateFolderInfo(id: Long, folderTitle: String, folderDescription: String) {
+        viewModelScope.launch {
+            _errorMessage.value = null
+            try {
+                val newFolder = userRepository.updateFolderById(id, folderTitle, folderDescription)
+                Log.d("FLOW", "NEW folder from the api folder: $newFolder")
+                _selectedFolder.value = newFolder
+            } catch( e: Exception){
+                Log.d("FLOW", "error with updating folder by id: $id")
+                _errorMessage.value = "Failed to update folder, try again"
             }
         }
     }
@@ -234,5 +259,6 @@ class UserViewModel(
             apply() // Save changes
         }
     }
+
 
 }

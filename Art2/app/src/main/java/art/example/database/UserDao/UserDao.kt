@@ -68,4 +68,21 @@ interface UserDao {
     suspend fun getUserByIdWithFolders(userId: Long): UserWithFolders?
 
 
+    @Transaction
+    suspend fun deleteFolderWithConnections(folderId: Long) {
+        // Delete connections (cross-references) in FolderWithPostsCrossRef
+        deleteFolderConnections(folderId)
+
+        // Delete the folder itself from the folders table
+        deleteFolderById(folderId)
+    }
+
+
+    @Query("DELETE FROM folders WHERE folderId = :folderId")
+    suspend fun deleteFolderById(folderId: Long)
+
+    @Query("DELETE FROM FolderWithPostsCrossRef WHERE folderId = :folderId")
+    suspend fun deleteFolderConnections(folderId: Long)
+
+
 }

@@ -1,20 +1,51 @@
-package art.example.navigation
-
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Divider
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.ModalBottomSheetDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
-import art.example.api.data.Post
+import art.example.navigation.MenuItem
+import art.example.navigation.MyTopAppBar
+import art.example.navigation.PostCard
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderDetailScreen(
     folderId: Long,
@@ -24,6 +55,14 @@ fun FolderDetailScreen(
     val selectedFolder by userViewModel.selectedFolder.observeAsState()
     val isLoadingFolder by userViewModel.isLoadingFolder.observeAsState(initial = false)
     val errorMessage by userViewModel.errorMessage.observeAsState()
+
+
+    var isEditMode by remember { mutableStateOf(false) }
+    var folderTitle by remember { mutableStateOf("") }
+    var folderDescription by remember { mutableStateOf("")}
+
+    // State to control bottom sheet visibility
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     // Fetch folder details when the folderId changes
     LaunchedEffect(folderId) {
@@ -36,8 +75,8 @@ fun FolderDetailScreen(
                 title = "Detailed folder",
                 showBackButton = true,
                 onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
-                onMoreClicked = { /* Handle more options */ },
-                onBackClicked = { navController.popBackStack()}
+                onMoreClicked = { showBottomSheet = true }, // Show bottom sheet on more button click
+                onBackClicked = { navController.popBackStack() }
             )
         }
     ) { innerPadding ->
@@ -86,6 +125,7 @@ fun FolderDetailScreen(
                         contentPadding = PaddingValues(8.dp)
                     ) {
                         items(folder.posts ?: emptyList()) { post ->
+                            // adding new menu item to delete post from folder
                             val menuItems = listOf(
                                 MenuItem(
                                     label = "Delete post",
@@ -105,6 +145,138 @@ fun FolderDetailScreen(
                     }
                 } ?: run {
                     Text(text = "Folder not found.", style = MaterialTheme.typography.bodyLarge)
+                }
+
+                // Bottom sheet for additional options
+                if (showBottomSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showBottomSheet = false },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                        scrimColor = Color.White,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Options",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Divider()
+
+                            // update folder
+                            TextButton (
+                                onClick = {
+                                    showBottomSheet = false
+                                    isEditMode = true
+                                }
+                            ){
+                                Text("Update folder info", color = Color.Blue)
+                            }
+                            // delete folder from user
+                            TextButton(
+                                onClick = {
+                                    showBottomSheet = false
+                                    selectedFolder?.let { folder ->
+                                        userViewModel.deleteFolderById(folder.id)
+                                        navController.popBackStack()
+                                    }
+                                }
+                            ) {
+                                Text("Delete Folder", color = Color.Red)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Close button
+                            TextButton(
+                                onClick = { showBottomSheet = false }
+                            ) {
+                                Text("Close")
+                            }
+                        }
+                    }
+                }
+
+                if (isEditMode) {
+                    Dialog(onDismissRequest = { isEditMode = false }) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            elevation = CardDefaults.elevatedCardElevation(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Update Folder",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                OutlinedTextField(
+                                    value = folderTitle,
+                                    onValueChange = { folderTitle = it },
+                                    label = { Text("Folder Name") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                OutlinedTextField(
+                                    value = folderDescription,
+                                    onValueChange = { folderDescription = it },
+                                    label = { Text("Description") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    Button(
+                                        onClick = { isEditMode = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.error
+                                        )
+                                    ) {
+                                        Text("Cancel")
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            userViewModel.updateFolderInfo(
+                                                id = folderId,
+                                                folderTitle = folderTitle,
+                                                folderDescription = folderDescription
+                                            )
+                                            isEditMode = false
+                                        }
+                                    ) {
+                                        Text("Submit")
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                errorMessage?.let {
+                                    Text(
+                                        text = it,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

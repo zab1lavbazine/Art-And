@@ -77,6 +77,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
         // Add padding to account for top and bottom bars
         Box (
             modifier = Modifier
+                .fillMaxSize()
                 .padding(paddingValues)
                 .pullRefresh(pullRefreshState)
         ) {
@@ -105,7 +106,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
 @Composable
 fun PostGrid(posts: LazyPagingItems<Post>, onClick: (Long) -> Unit) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(1),
         modifier = Modifier.fillMaxSize().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -165,31 +166,35 @@ fun PostCard(
                 }
             }
 
-            // More options button
-            IconButton(
-                onClick = { expanded = true },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-            ) {
-                Icon(Icons.Default.MoreVert, contentDescription = "More options")
-            }
-
-            // Dropdown menu with options
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                menuItems.forEach { menuItem ->
-                    DropdownMenuItem(
-                        text = { Text(menuItem.label) },
-                        onClick = {
-                            menuItem.onClick()
-                            expanded = false
-                        }
-                    )
+            if (menuItems.isNotEmpty()) {
+                // More options button
+                IconButton(
+                    onClick = { expanded = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
                 }
             }
+
+
+            // show only it is not empty
+                // Dropdown menu with options
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    menuItems.forEach { menuItem ->
+                        DropdownMenuItem(
+                            text = { Text(menuItem.label) },
+                            onClick = {
+                                menuItem.onClick()
+                                expanded = false
+                            }
+                        )
+                    }
+                }
         }
     }
 }

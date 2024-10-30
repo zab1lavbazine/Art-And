@@ -147,7 +147,7 @@ class UserRepository(
                 if (!folder.posts?.contains(post)!!) {
                     folder.posts = (folder.posts ?: mutableListOf()).apply { add(post) }
                     val folderDTO = folder.toFolderDTO()
-                    val newFolder = folderApiService.updateFolder(folder.id, folderDTO)
+                    val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
                     saveFolder(newFolder!!)
                 }
                 folder
@@ -155,6 +155,17 @@ class UserRepository(
                 Log.e("FLOW", "ERROR with updating folder with post")
                 null
             }
+    }
+
+    suspend fun updateFolderById(id: Long, folderTitle: String, folderDescription: String): Folder?{
+        val folder = getFolderById(id)
+        if (folder != null) {
+            val postIds = folder.posts?.map { post -> post.id } ?: emptyList()
+            val newFolderDTO = FolderDTO(title =  folderTitle, description = folderDescription, postIds = postIds)
+            val newFolder = folderApiService.updateFolderById(id, newFolderDTO)
+           return  newFolder
+        }
+        return null
     }
 
 
@@ -167,7 +178,7 @@ class UserRepository(
             } else {
                 folder.posts!!.remove(post)
                 val folderDTO = folder.toFolderDTO()
-                val newFolder = folderApiService.updateFolder(folder.id, folderDTO)
+                val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
                 Log.d("FLOW", "new folder after deleting folder: $newFolder")
                 saveFolder(newFolder!!)
                 postDao.deletePostWithFolder(folderId = folder.id, postId = post.id)
@@ -177,6 +188,16 @@ class UserRepository(
             Log.e("FLOW", "ERROR with deleting post from folder")
             null
         }
+    }
+
+    @Transaction
+    suspend fun deleteFolderById(folderId: Long){
+        folderApiService.deleteFolderById(folderId)
+        Log.d("FLOW", "Folder deleted in api service")
+
+        // delete folder from the local repository
+        userDao.deleteFolderById(folderId)
+        Log.d("FLOW", "Folder deleted in local repository")
     }
 
     private suspend fun saveFolder(folder: Folder) {

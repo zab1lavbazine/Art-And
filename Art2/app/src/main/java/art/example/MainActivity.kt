@@ -1,5 +1,6 @@
 package art.example
 
+import FolderDetailScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +13,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import art.example.navigation.CreateFolder
 import art.example.navigation.CreatePost
-import art.example.navigation.FolderDetailScreen
 import art.example.navigation.HelloScreen
 import art.example.navigation.LoginScreen
 import art.example.navigation.MyProfile
@@ -20,6 +20,7 @@ import art.example.navigation.PostDetailScreen
 import art.example.navigation.PostListScreen
 import art.example.navigation.RegisterScreen
 import art.example.navigation.SearchScreen
+import art.example.navigation.UpdateFolderInfo
 import art.example.screen.Screen
 
 class MainActivity : ComponentActivity() {
@@ -80,6 +81,7 @@ fun MyApp() {
                 PostDetailScreen(postId, navController = navController)
             }
         }
+
         composable(
             Screen.FolderDetail.route,
             arguments = listOf(navArgument("folderId") { type = NavType.LongType })
