@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Image(
     val id: Long,
-    val data: ByteArray
+    val data: ByteArray? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.paging.common.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -106,6 +107,16 @@ dependencies {
     implementation(libs.androidx.compose.material.material)
 
     implementation(libs.androidx.navigation.compose.v277)
+
+    implementation(libs.androidx.paging.runtime.ktx) // For Paging 3
+    implementation(libs.androidx.paging.compose) // For Paging with Compose
+    implementation(libs.androidx.paging.common.android)
+    implementation(libs.androidx.paging.rxjava2)
+    implementation(libs.androidx.paging.rxjava3)
+
+
+    implementation(libs.androidx.ui.v1xx) // For Jetpack Compose
+    implementation(libs.androidx.material.v1xx) // For Material components
 
 
 

@@ -2,6 +2,7 @@ package art.example.api.repository.impl
 
 import android.content.Context
 import android.util.Log
+import androidx.paging.PagingSource
 import art.example.api.data.*
 import art.example.api.data.DTO.PostDTO
 import art.example.api.repository.IPostRepository
@@ -25,35 +26,51 @@ class PostRepository(
     // In-memory cache
     private val postsCache = mutableListOf<Post>()
 
-    // Fetch all posts (from cache, database, or API)
-    override suspend fun getPosts(): List<Post> {
-        return try {
-            if (postsCache.isEmpty()) {
-                // Fetch from local database
-                val localPosts = withContext(Dispatchers.IO) { postDao.getAllPostsWithDetails() }
-                Log.d("FLOW", "GET POST FROM DATABASE: $localPosts")
-                if (localPosts.isNotEmpty()) {
-                    postsCache.addAll(localPosts.map { it.toPost() }) // Convert PostEntity to Post
-                } else {
-                    // Fetch from API
-                    val apiPosts = postApiService.getPosts()
-                    Log.d("FLOW", "GET POSTS FROM API: $apiPosts")
-                    postsCache.addAll(apiPosts)
+//    // Fetch all posts (from cache, database, or API)
+//    suspend fun getPosts(pageNumber: Int): List<Post> {
+//        return try {
+//            if (postsCache.isEmpty() || pageNumber == 0) { // fetch from api if cache null or empty
+//                // Fetch from local database
+//                val localPosts = withContext(Dispatchers.IO) { postDao.getAllPostsWithDetails() }
+//                Log.d("FLOW", "GET POST FROM DATABASE: $localPosts")
+//                if (localPosts.isNotEmpty()) {
+//                    postsCache.addAll(localPosts.map { it.toPost() }) // Convert PostEntity to Post
+//                } else {
+//                    // Fetch from API
+//                    val apiPosts = postApiService.getPosts()
+//                    Log.d("FLOW", "GET POSTS FROM API: $apiPosts")
+//                    postsCache.addAll(apiPosts)
+//
+//                    // Save posts and related data in the database
+//                    withContext(Dispatchers.IO) {
+//                        apiPosts.forEach { post ->
+//                            savePost(post) // Save post, tags, and images
+//                        }
+//                    }
+//                }
+//            }
+//            postsCache
+//        } catch (e: Exception) {
+//            Log.e("PostRepository", "Error fetching posts: ${e.message}", e)
+//            emptyList()
+//        }
+//    }
 
-                    // Save posts and related data in the database
-                    withContext(Dispatchers.IO) {
-                        apiPosts.forEach { post ->
-                            savePost(post) // Save post, tags, and images
-                        }
-                    }
-                }
-            }
-            postsCache
+
+    suspend fun getPosts(pageSize: Int, pageNumber: Int): List<Post> {
+        return try {
+            // Fetch posts from the API for the specified page number
+            val response = postApiService.getPosts(pageNumber, pageSize)
+            Log.d("FLOW", "Response from the api: $response")
+            val posts = response.content
+            posts
         } catch (e: Exception) {
-            Log.e("PostRepository", "Error fetching posts: ${e.message}", e)
+            Log.d("FLOW", "ERROR while fetching recommendations $e")
+            // Handle errors (you could log the error or return an empty list)
             emptyList()
         }
     }
+
 
     suspend fun loadTags():List<Tag>{
         return tagDao.loadTags().map { tag -> tag.toTag() }
@@ -61,15 +78,23 @@ class PostRepository(
 
     override suspend fun getPostById(id: Long): Post? {
             // Fetch a single post from cache or database
-            Log.d("FLOW", "FETCHING POST WITH ID : $id")
-            var localPost = postsCache.find{ it.id == id}
-        if (localPost == null) {
-            localPost = postDao.getPostWithTagsAndImage(id)
-                ?.toPost()
-            Log.d("FLOW", "Post from postDao $localPost")
-            localPost?.let {postsCache.add(localPost)}
+//            Log.d("FLOW", "FETCHING POST WITH ID : $id")
+//            var localPost = postsCache.find{ it.id == id}
+//        if (localPost == null) {
+//            localPost = postDao.getPostWithTagsAndImage(id)
+//                ?.toPost()
+//            Log.d("FLOW", "Post from postDao $localPost")
+//            localPost?.let {postsCache.add(localPost)}
+//        }
+
+        // new version for pageable
+        val postApi = postApiService.getPostById(id)
+        if (postApi != null){
+            Log.d("FLOW", "Saving post by id: $id, post: $postApi")
+            savePost(postApi)
         }
-        return localPost
+
+        return postApi
     }
 
     // Save post, tags, and images into the database
@@ -122,24 +147,24 @@ class PostRepository(
 
 
 
-    suspend fun updateDatabasePosts(): List<Post>{
-        return  withContext(Dispatchers.IO){
-            try {
-                //first getting all posts, if failed save current posts
-                val apiPosts = postApiService.getPosts()
-
-                postsCache.clear()
-                postDao.deleteAllPosts()
-
-                apiPosts.forEach { post ->
-                    savePost(post)
-                }
-                postsCache.addAll(apiPosts)
-                apiPosts
-            } catch (e : Exception){
-                Log.d("FLOW", "UPDATE POSTS FAILED with API")
-                postsCache
-            }
-        }
-    }
+//    suspend fun updateDatabasePosts(): List<Post>{
+//        return  withContext(Dispatchers.IO){
+//            try {
+//                //first getting all posts, if failed save current posts
+//                val apiPosts = postApiService.getPosts()
+//
+//                postsCache.clear()
+//                postDao.deleteAllPosts()
+//
+//                apiPosts.forEach { post ->
+//                    savePost(post)
+//                }
+//                postsCache.addAll(apiPosts)
+//                apiPosts
+//            } catch (e : Exception){
+//                Log.d("FLOW", "UPDATE POSTS FAILED with API")
+//                postsCache
+//            }
+//        }
+//    }
 }

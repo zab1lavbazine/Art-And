@@ -152,7 +152,7 @@ fun PostCardItem(
                     .weight(0.8f),
                 contentScale = ContentScale.Fit
             )
-        } else if (post.image != null) {
+        } else if (post.image?.data != null) {
             val imageBitmap = byteArrayToImageBitmap(post.image.data)
             Image(
                 bitmap = imageBitmap,

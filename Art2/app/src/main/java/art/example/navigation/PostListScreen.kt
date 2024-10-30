@@ -1,9 +1,6 @@
 package art.example.navigation
 
-import android.annotation.SuppressLint
-import android.graphics.drawable.Icon
-import android.text.Layout
-import android.util.Log
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -20,15 +16,13 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -41,12 +35,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import art.example.ViewModel.PostViewModel
 import art.example.api.data.Post
 import art.example.screen.Screen
 import coil.compose.rememberAsyncImagePainter
 import org.koin.androidx.compose.koinViewModel
-import coil.compose.rememberImagePainter // Import Coil for image loading
 
 
 
@@ -55,17 +51,14 @@ import coil.compose.rememberImagePainter // Import Coil for image loading
 @Composable
 fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val viewModel: PostViewModel = koinViewModel()
-    val posts by viewModel.posts.observeAsState(emptyList())
-    val isLoading by viewModel.isLoading.observeAsState(true)
+    val posts = viewModel.posts.collectAsLazyPagingItems()
+    val isLoading by viewModel.isLoading.observeAsState(false)
 
-    val pullRefreshState = rememberPullRefreshState(refreshing = isLoading, onRefresh = {
-        viewModel.updatePosts() // Refresh posts
-    })
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isLoading,
+        onRefresh = { posts.refresh() } // Refreshes the posts list
+    )
 
-
-    LaunchedEffect(Unit) {
-        viewModel.loadPost()
-    }
 
 
     Scaffold(
@@ -88,26 +81,41 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
                 .pullRefresh(pullRefreshState)
         ) {
             // Display a grid layout of posts
-            if (!isLoading) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(1), // Adjust to your desired column count
-                    modifier = modifier.fillMaxSize(), // Use the provided modifier
-                    contentPadding = PaddingValues(8.dp) // Padding around the grid
-                ) {
-                    items(posts) { post ->
-                        PostCard(post = post, onClick = {
-                            // Navigate to the PostDetail screen when the post is clicked
-                            navController.navigate(Screen.PostDetail.createRoute(post.id))
-                        })
-                    }
-                }
-            } else {
-                // Show a loading spinner while posts are loading
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+
+            when {
+                posts.loadState.refresh is LoadState.Loading -> {
                     CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color.Blue
                     )
                 }
+                else -> {
+                    PostGrid(
+                        posts = posts,
+                        onClick = { postId ->
+                            navController.navigate(Screen.PostDetail.createRoute(postId))
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PostGrid(posts: LazyPagingItems<Post>, onClick: (Long) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize().padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(posts.itemSnapshotList) { post ->
+            if (post != null) {
+                PostCard(
+                    post = post,
+                    onClick = { onClick(post.id) }
+                )
             }
         }
     }
