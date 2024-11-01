@@ -1,0 +1,57 @@
+package art.example.database.entities
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import art.example.api.data.Image
+
+@Entity(
+    tableName = "images",
+    foreignKeys = [
+        ForeignKey(
+            entity = PostEntity::class,
+            parentColumns = ["postId"],
+            childColumns = ["postId"],
+            onDelete = ForeignKey.CASCADE // When a post is deleted, the associated image is also deleted
+        )
+    ]
+)
+data class ImageEntity(
+    @PrimaryKey val id: Long,
+    val postId: Long, // Foreign key referencing PostEntity
+    val data: String?, // Your image data
+//    val imageUrl: String? = null
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ImageEntity
+
+        if (id != other.id) return false
+        if (postId != other.postId) return false
+        if (data != null) {
+            if (other.data == null) return false
+            if (!data.contentEquals(other.data)) return false
+        } else if (other.data != null) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + postId.hashCode()
+        result = 31 * result + (data?.hashCode() ?: 0)
+        return result
+    }
+
+    fun toImage(): Image? {
+        return data?.let {
+            Image(
+                id = id,
+                data = it
+            )
+        }
+
+    }
+}
