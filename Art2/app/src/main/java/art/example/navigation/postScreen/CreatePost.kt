@@ -1,4 +1,4 @@
-package art.example.navigation
+package art.example.navigation.postScreen
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import art.example.ViewModel.PostViewModel
 import art.example.api.data.DTO.PostDTO
+import art.example.navigation.MyTopAppBar
 import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("MutableCollectionMutableState")

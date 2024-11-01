@@ -1,4 +1,4 @@
-package art.example.navigation
+package art.example.navigation.startScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -8,7 +8,7 @@ import art.example.api.repository.impl.PostRepository
 
 class PostPagingSource(
     private val postRepository: PostRepository,
-    private val pageSize: Int = 20
+    private val pageSize: Int = 5 // todo() change to 20 , 5 is testing example
 ) : PagingSource<Int, Post>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {

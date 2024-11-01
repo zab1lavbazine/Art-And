@@ -1,8 +1,7 @@
-package art.example.navigation
+package art.example.navigation.profileScreen
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,9 +41,13 @@ import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
 import art.example.api.data.User
+import art.example.navigation.BottomNavigationBar
+import art.example.navigation.MenuItem
+import art.example.navigation.MyTopAppBar
+import art.example.navigation.postScreen.PostCard
+import art.example.navigation.postScreen.TagBox
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
-import org.koin.androidx.compose.viewModel
 
 
 @Composable

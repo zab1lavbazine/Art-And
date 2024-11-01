@@ -1,11 +1,10 @@
-package art.example.navigation
+package art.example.navigation.postScreen
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 
 import androidx.compose.foundation.layout.Box
@@ -52,6 +51,8 @@ import art.example.api.data.Folder
 import art.example.api.data.Post
 import coil.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.lazy.items
+import art.example.navigation.BottomNavigationBar
+import art.example.navigation.MyTopAppBar
 
 
 import org.koin.androidx.compose.koinViewModel

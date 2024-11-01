@@ -1,4 +1,4 @@
-package art.example.navigation
+package art.example.navigation.postScreen
 
 
 import androidx.compose.foundation.Image
@@ -40,6 +40,9 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import art.example.ViewModel.PostViewModel
 import art.example.api.data.Post
+import art.example.navigation.BottomNavigationBar
+import art.example.navigation.MenuItem
+import art.example.navigation.MyTopAppBar
 import art.example.screen.Screen
 import coil.compose.rememberAsyncImagePainter
 import org.koin.androidx.compose.koinViewModel

@@ -1,3 +1,5 @@
+package art.example.navigation.folderScreen
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,7 +22,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
@@ -41,11 +42,11 @@ import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
-import art.example.navigation.PostCard
+import art.example.navigation.postScreen.PostCard
+import art.example.navigation.supportElements.MyModalBottomSheet
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderDetailScreen(
     folderId: Long,
@@ -59,7 +60,7 @@ fun FolderDetailScreen(
 
     var isEditMode by remember { mutableStateOf(false) }
     var folderTitle by remember { mutableStateOf("") }
-    var folderDescription by remember { mutableStateOf("")}
+    var folderDescription by remember { mutableStateOf("") }
 
     // State to control bottom sheet visibility
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -69,13 +70,36 @@ fun FolderDetailScreen(
         userViewModel.getDetailedFolder(folderId)
     }
 
+
+    val menuItems = listOf(
+        MenuItem(
+            label = "Update folder info",
+            onClick = {
+                showBottomSheet = false
+                isEditMode = true
+            }
+        ),
+        MenuItem(
+            label = "Delete folder",
+            onClick = {
+                showBottomSheet = false
+                selectedFolder?.let { folder ->
+                    userViewModel.deleteFolderById(folder.id)
+                    navController.popBackStack()
+                }
+            }
+        )
+    )
+
     Scaffold(
         topBar = {
             MyTopAppBar(
                 title = "Detailed folder",
                 showBackButton = true,
                 onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
-                onMoreClicked = { showBottomSheet = true }, // Show bottom sheet on more button click
+                onMoreClicked = {
+                    showBottomSheet = true
+                }, // Show bottom sheet on more button click
                 onBackClicked = { navController.popBackStack() }
             )
         }
@@ -148,57 +172,13 @@ fun FolderDetailScreen(
                 }
 
                 // Bottom sheet for additional options
-                if (showBottomSheet) {
-                    ModalBottomSheet(
-                        onDismissRequest = { showBottomSheet = false },
-                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                        scrimColor = Color.White,
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Options",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Divider()
 
-                            // update folder
-                            TextButton (
-                                onClick = {
-                                    showBottomSheet = false
-                                    isEditMode = true
-                                }
-                            ){
-                                Text("Update folder info", color = Color.Blue)
-                            }
-                            // delete folder from user
-                            TextButton(
-                                onClick = {
-                                    showBottomSheet = false
-                                    selectedFolder?.let { folder ->
-                                        userViewModel.deleteFolderById(folder.id)
-                                        navController.popBackStack()
-                                    }
-                                }
-                            ) {
-                                Text("Delete Folder", color = Color.Red)
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
+                MyModalBottomSheet(
+                    showDialog = showBottomSheet,
+                    onDismissRequest = { showBottomSheet = false },
+                    menuItems = menuItems
+                )
 
-                            // Close button
-                            TextButton(
-                                onClick = { showBottomSheet = false }
-                            ) {
-                                Text("Close")
-                            }
-                        }
-                    }
-                }
 
                 if (isEditMode) {
                     Dialog(onDismissRequest = { isEditMode = false }) {
@@ -282,3 +262,4 @@ fun FolderDetailScreen(
         }
     }
 }
+

@@ -1,6 +1,6 @@
 package art.example
 
-import FolderDetailScreen
+import art.example.navigation.folderScreen.FolderDetailScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,16 +11,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import art.example.navigation.CreateFolder
-import art.example.navigation.CreatePost
-import art.example.navigation.HelloScreen
-import art.example.navigation.LoginScreen
-import art.example.navigation.MyProfile
-import art.example.navigation.PostDetailScreen
-import art.example.navigation.PostListScreen
-import art.example.navigation.RegisterScreen
+import art.example.navigation.folderScreen.CreateFolder
+import art.example.navigation.postScreen.CreatePost
+import art.example.navigation.startScreen.HelloScreen
+import art.example.navigation.startScreen.LoginScreen
+import art.example.navigation.profileScreen.MyProfile
+import art.example.navigation.postScreen.PostDetailScreen
+import art.example.navigation.postScreen.PostListScreen
+import art.example.navigation.startScreen.RegisterScreen
 import art.example.navigation.SearchScreen
-import art.example.navigation.UpdateFolderInfo
 import art.example.screen.Screen
 
 class MainActivity : ComponentActivity() {
@@ -66,7 +65,7 @@ fun MyApp() {
                 onLoginSuccess = onLoginSuccess
             )
         }
-        composable(Screen.HelloScreen.route) { HelloScreen(navController)}
+        composable(Screen.HelloScreen.route) { HelloScreen(navController) }
         composable(Screen.PostsScreen.route) { PostListScreen(navController) }
         composable(Screen.MyProfile.route) { MyProfile(navController) }
         composable(Screen.CreatePost.route) { CreatePost(navController) }
