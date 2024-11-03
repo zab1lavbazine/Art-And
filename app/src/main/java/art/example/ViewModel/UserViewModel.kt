@@ -22,9 +22,6 @@ class UserViewModel(
 
     private val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
 
-    // LiveData for the selected user
-    private val _selectedUser = MutableLiveData<User?>()
-    val selectedUser: LiveData<User?> get() = _selectedUser
 
     private val _users = MutableLiveData<List<User>>()
     val users: LiveData<List<User>> get() = _users
@@ -54,6 +51,10 @@ class UserViewModel(
     val userFolders: LiveData<List<Folder>> get() = _userFolders
 
 
+    private val _selectedUser = MutableLiveData<User?>()
+    val selectedUser: LiveData<User?> get() = _selectedUser
+
+
 
     fun getUserFolders() {
         viewModelScope.launch {
@@ -65,6 +66,22 @@ class UserViewModel(
                 // Handle error
             } finally {
                 _isLoadingPosts.value = false
+            }
+        }
+    }
+
+    fun getUserFoldersById(userId: Long){
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val userFolders = userRepository.getUserFoldersById(userId)
+                _selectedFolder.value = userFolders
+                Log.d("FLOW", "USER folders $userFolders")
+            } catch(e : Exception){
+                Log.d("FLOW", "ERROR getting folders for userId: $userId")
+
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -107,6 +124,23 @@ class UserViewModel(
                 }
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Error fetching current user", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+    fun getUserById(userId: Long){
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val fetchedUser = userRepository.getUserAccount(userId)
+                _selectedUser.value = fetchedUser
+                Log.d("FLOW", "Fetched user $fetchedUser")
+            } catch (e : Exception) {
+                Log.d("FLOW", "ERROR fetching user with id: $userId")
+
             } finally {
                 _isLoading.value = false
             }

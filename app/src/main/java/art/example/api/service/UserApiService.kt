@@ -29,4 +29,8 @@ interface UserApiService {
     @GET("/api/users/account")
     suspend fun getUserByUsername(): User?
 
+
+    @GET("/api/users/{id}")
+    suspend fun getUserById(userId: Long): User?
+
 }

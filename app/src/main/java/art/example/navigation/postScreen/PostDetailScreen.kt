@@ -56,6 +56,7 @@ import art.example.navigation.MyTopAppBar
 import art.example.navigation.supportElements.MyModalBottomSheet
 
 import android.util.Base64
+import art.example.screen.Screen
 
 
 import org.koin.androidx.compose.koinViewModel
@@ -137,7 +138,8 @@ fun PostDetailScreen(
                         showDialog.value = false // Hide dialog after saving
                     },
                     showDialog = showDialog,
-                    userFolders = userFolders
+                    userFolders = userFolders,
+                    navController = navController
                 )
 
             }
@@ -158,7 +160,8 @@ fun PostCardItem(
     post: Post,
     onAddToFolderClick: (Folder) -> Unit,
     showDialog: MutableState<Boolean>,
-    userFolders: List<Folder>
+    userFolders: List<Folder>,
+    navController: NavHostController
 ) {
     // Wrap the Column with verticalScroll
     Column(
@@ -226,6 +229,27 @@ fun PostCardItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(4.dp))
+
+            if (post.patron != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .clickable() {
+                            navController.navigate(Screen.UserDetailedScreen.createRoute(post.patron.id))
+                        }
+                ) {
+                    Text(
+                        text = "Posted by: ${post.patron.username}",
+                        fontSize = 14.sp,
+                        color = Color.LightGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                    )
+
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             Row(modifier = Modifier.fillMaxWidth()) {
                 post.tags?.forEach { tag ->
                     TagBox(tag.name)

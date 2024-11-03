@@ -104,6 +104,20 @@ class UserRepository(
         }
 
 
+    // method to get user folders from api
+    @Transaction
+    suspend fun getUserFoldersById(userId: Long): List<Folder>{
+        val fetchedUser = userApiService.getUserById(userId)
+        val fetchedFolders = folderApiService.getFoldersByUserId(userId)
+        fetchedFolders.forEach{ folder ->
+            folder.user  = fetchedUser
+            saveFolder(folder)
+        }
+        return fetchedFolders
+    }
+
+
+
 
     suspend fun getFolderById(folderId: Long): Folder? {
         return try {
@@ -271,6 +285,7 @@ class UserRepository(
             user
         }
     }
+
 
     private suspend fun createUser(user: User){
         withContext(Dispatchers.IO){

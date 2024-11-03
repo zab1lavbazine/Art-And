@@ -20,6 +20,7 @@ import art.example.navigation.postScreen.PostDetailScreen
 import art.example.navigation.postScreen.PostListScreen
 import art.example.navigation.startScreen.RegisterScreen
 import art.example.navigation.SearchScreen
+import art.example.navigation.profileScreen.UserDetailedScreen
 import art.example.screen.Screen
 
 class MainActivity : ComponentActivity() {
@@ -78,6 +79,14 @@ fun MyApp() {
             val postId = backStackEntry.arguments?.getLong("postId")
             if (postId != null) {
                 PostDetailScreen(postId, navController = navController)
+            }
+        }
+
+        composable(Screen.UserDetailedScreen.route, arguments = listOf(navArgument("userId"){ type = NavType.LongType})) {
+            navBackStackEntry ->
+            val userId = navBackStackEntry.arguments?.getLong("userId")
+            if (userId != null){
+                UserDetailedScreen(userId, navController = navController)
             }
         }
 
