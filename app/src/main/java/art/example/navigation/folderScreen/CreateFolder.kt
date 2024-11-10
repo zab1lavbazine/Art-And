@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import art.example.ViewModel.FolderViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.MyTopAppBar
 import org.koin.androidx.compose.koinViewModel
@@ -31,10 +32,10 @@ fun CreateFolder(navController: NavController) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    val userViewModel: UserViewModel = koinViewModel()
+    val folderViewMode: FolderViewModel = koinViewModel()
 
-    val isloading by userViewModel.isLoading.observeAsState(false)
-    val errorMessage by userViewModel.errorMessage.observeAsState()
+    val isloading by folderViewMode.isLoading.observeAsState(false)
+    val errorMessage by folderViewMode.errorMessage.observeAsState()
 
     Scaffold(
         topBar = {
@@ -80,7 +81,7 @@ fun CreateFolder(navController: NavController) {
                 // Create button
                 Button(
                     onClick = {
-                        userViewModel.createFolder(title, description)
+                        folderViewMode.createFolder(title, description)
                         navController.popBackStack()
                     },
                     modifier = Modifier.align(Alignment.End)

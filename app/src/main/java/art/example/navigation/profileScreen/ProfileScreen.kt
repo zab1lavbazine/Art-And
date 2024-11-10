@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import art.example.ViewModel.FolderViewModel
+import art.example.ViewModel.PostViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
@@ -51,13 +53,21 @@ import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun MyProfile(navController: NavHostController) {
+fun MyProfile(
+    navController: NavHostController,
+) {
     val userViewModel: UserViewModel = koinViewModel()
+    val folderViewModel: FolderViewModel = koinViewModel()
+    val postViewModel: PostViewModel = koinViewModel()
+
+
     val currentUser by userViewModel.currentUser.observeAsState()
     val isLoading by userViewModel.isLoading.observeAsState(false)
-    val isLoadingPost by userViewModel.isLoadingPosts.observeAsState(false)
-
-    val userFolders by userViewModel.userFolders.observeAsState()
+    val isFolderLoading by folderViewModel.isLoading.observeAsState(false)
+    val isLoadingPost by postViewModel.isLoading.observeAsState(false)
+//
+    val userFolders by folderViewModel.folders.observeAsState()
+    val userPosts by postViewModel.selectedPosts.observeAsState(emptyList())
 
     // State to manage the selected tab index
     val selectedTabIndex = remember { mutableIntStateOf(0) }
@@ -67,12 +77,12 @@ fun MyProfile(navController: NavHostController) {
     LaunchedEffect(Unit) {
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
+        postViewModel.getCurrentUserPosts()
     }
 
     LaunchedEffect(selectedTabIndex.intValue) {
-        if (selectedTabIndex.intValue == 1) {
-            Log.d("FLOW", "Loading user folders")
-            userViewModel.getUserFolders()
+        if (selectedTabIndex.intValue == 1){
+            folderViewModel.getCurrentUserFolders()
         }
     }
 
@@ -134,8 +144,8 @@ fun MyProfile(navController: NavHostController) {
 
                 // Display the selected content based on the selected tab
                 when (selectedTabIndex.intValue) {
-                    0 -> UserPostsList(usersPosts = currentUser?.posts, navController) // Pass loading status
-                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController, isLoadingPost) } // Your user folders list implementation
+                    0 -> UserPostsList(usersPosts = userPosts, navController, isLoading =  isLoadingPost) // Pass loading status
+                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController,isFolderLoading ) } // Your user folders list implementation
                 }
             }
         }
@@ -159,7 +169,7 @@ fun UserCard(user: User) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = user.email, fontSize = 16.sp, color = Color.Gray)
 
-            user.preferredTags?.let { tags ->
+            user.preferredTags.let { tags ->
                 if (tags.isNotEmpty()){
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
@@ -177,32 +187,45 @@ fun UserCard(user: User) {
 fun UserPostsList(
     usersPosts: List<Post>?,
     navController: NavHostController,
-    menuItems: List<MenuItem> = emptyList()
+    menuItems: List<MenuItem> = emptyList(),
+    isLoading: Boolean
 ) {
-
-    if (usersPosts.isNullOrEmpty()){
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .wrapContentSize(Alignment.Center)
-        ) {
-            Text(text = "No Posts", fontSize = 20.sp, color = Color.Gray)
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+            ) {
+                CircularProgressIndicator()
+            }
         }
-    } else {
-        // Implement your user posts list UI here
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(1),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            items(usersPosts) { post ->
-                // Display each post in the grid
-                    PostCard(post = post, onClick = {
-                        // Navigate to post details when the post is clicked
-                        navController.navigate(Screen.PostDetail.createRoute(post.id)) // Use the post ID to navigate
-                    },
+        usersPosts.isNullOrEmpty() -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+            ) {
+                Text(text = "No Posts", fontSize = 20.sp, color = Color.Gray)
+            }
+        }
+        else -> {
+            // Display user posts list when not loading and data is available
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(1),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                items(usersPosts) { post ->
+                    PostCard(
+                        post = post,
+                        onClick = {
+                            // Navigate to post details when the post is clicked
+                            navController.navigate(Screen.PostDetail.createRoute(post.id))
+                        },
                         menuItems = menuItems
                     )
+                }
             }
         }
     }
@@ -214,7 +237,7 @@ fun UserPostsList(
 fun UserFoldersList(
     userFolders: List<Folder>,
     navController: NavHostController,
-    isLoadingPost: Boolean
+    isLoadingFolder: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -222,7 +245,7 @@ fun UserFoldersList(
             .padding(8.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        if (isLoadingPost) {
+        if (isLoadingFolder) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

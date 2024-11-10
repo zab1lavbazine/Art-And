@@ -1,6 +1,7 @@
 package art.example.ViewModel
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PostViewModel(
     private val postRepository: PostRepository,
@@ -34,23 +36,64 @@ class PostViewModel(
 //    private val _posts : Flow<PagingData<Post>> = getPostsStream()
     val posts : Flow<PagingData<Post>> = getPostsStream()
 
-    private val _tags = MutableLiveData<List<Tag>>()
-    val tags : LiveData<List<Tag>> get() = _tags
+
+    private val _selectedPosts = MutableLiveData<List<Post>>()
+    val selectedPosts: MutableLiveData<List<Post>> get() = _selectedPosts
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
-
 
     private val _isLoading = MutableLiveData<Boolean>(true)
     val isLoading : LiveData<Boolean> = _isLoading
 
 
 
+    fun getCurrentUserPosts(){
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val currentUserId = sharedPreferences.getLong("current_user_id", -1)
+                val posts = postRepository.getPostsByUserId(currentUserId)
+                _selectedPosts.value = posts
+            } catch (e: Exception){
+                Log.d("FLOW", "Error fetching posts for current user")
+                _selectedPosts.value = emptyList()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     private fun getPostsStream(): Flow<PagingData<Post>> {
         return Pager(
-            config = PagingConfig(pageSize = 20), // Set the desired page size
-            pagingSourceFactory = { PostPagingSource(postRepository, pageSize = 20) }
+            config = PagingConfig(pageSize = 5), // Set the desired page size
+            pagingSourceFactory = { PostPagingSource(postRepository, pageSize = 5) }
         ).flow.cachedIn(viewModelScope) // caching in the view model scope that data from the server
+    }
+
+    fun deletePostById(postId: Long){
+        viewModelScope.launch {
+            try {
+                postRepository.deletePostById(postId)
+            } catch (e: Exception){
+                Log.d("FLOW", "Error deleting post: $postId")
+            }
+        }
+    }
+
+
+    fun updatePost(updatedPost: Post){
+        viewModelScope.launch {
+            try {
+                Log.d("FLOW", "Updating post: $updatedPost")
+                val newPost = postRepository.updatePost(context = context, post = updatedPost)
+                _selectedPost.value = newPost
+                Log.d("FLOW", "Updating post: $newPost")
+            } catch (e: Exception){
+                Log.d("FLOW", "update post failed: ${e.message}")
+            }
+        }
     }
 
     fun loadById(id: Long) {
@@ -68,13 +111,12 @@ class PostViewModel(
         }
     }
 
-
-    fun submitPost(postDTO: PostDTO, imageUrl : String){
+    fun submitPost(postDTO: PostDTO, imageBitmap: Bitmap){
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                postRepository.createPost(postDTO, imageUrl)
+                postRepository.createPost(postDTO, imageBitmap)
                 _errorMessage.value = "Post submitted successfully!"
             } catch (e: Exception){
                 _errorMessage.value = "Submission failed: ${e.message}"
@@ -85,30 +127,4 @@ class PostViewModel(
         }
     }
 
-    fun loadTags(){
-        viewModelScope.launch {
-            try {
-                val fetchedTags = postRepository.loadTags() // Fetch tags from your repository
-                _tags.value = fetchedTags
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-
-
-//    fun updatePosts(){
-//        viewModelScope.launch{
-//            _isLoading.value = true
-//            try {
-//                Log.d("FLOW", "in the view model UPDATING posts")
-//                val fetchedPosts = postRepository.updateDatabasePosts()
-//                _posts.value = fetchedPosts
-//            } catch (e : Exception){
-//                // handle error
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
 }

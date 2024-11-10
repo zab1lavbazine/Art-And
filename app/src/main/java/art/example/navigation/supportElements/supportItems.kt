@@ -1,5 +1,6 @@
 package art.example.navigation.supportElements
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -8,12 +9,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Divider
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -25,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import art.example.api.data.Post
 import art.example.navigation.MenuItem
-import art.example.navigation.postScreen.base64StringToImageBitmap
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 
 
@@ -104,37 +108,35 @@ fun MyModalBottomSheet(
 
 
 @Composable
-fun ResolvePostImage(post: Post) {
-    when {
-        // Show image from URL if available
-        post.imageUrl != null -> {
+fun ResolvePostImage(post: Post, maxCardHeight: Dp = 200.dp) {
+
+    if (post.image?.file != null) {
+        val imageUrl = post.image.file
+        if (imageUrl.isEmpty()) {
+            Placeholder() // Show a placeholder if the URL is null or empty
+        } else {
+            // Coil image request to load the image
+            val imagePainter = rememberAsyncImagePainter(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl) // The image URL can be either a file path or a URL
+                    .crossfade(true) // Enable smooth transition
+                    .build()
+            )
+
+            // Display the image
             Image(
-                painter = rememberAsyncImagePainter(post.imageUrl),
-                contentDescription = post.title,
-                modifier = Modifier.fillMaxSize(),
+                painter = imagePainter,
+                contentDescription = "Post Image",
+                modifier = Modifier.fillMaxWidth()
+                    .heightIn(min = maxCardHeight), // Adjust to your layout
                 contentScale = ContentScale.Crop
             )
         }
-        // Show Base64 image if URL is unavailable and data is present
-        post.image?.data != null -> {
-            val imageBitmap = base64StringToImageBitmap(post.image.data)
-            if (imageBitmap != null) {
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = "Post Image",
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Placeholder()
-            }
-        }
-        // Show placeholder if no image data is available
-        else -> {
-            Placeholder()
-        }
+    } else {
+        Placeholder()
     }
 }
+
 
 @Composable
 fun Placeholder() {

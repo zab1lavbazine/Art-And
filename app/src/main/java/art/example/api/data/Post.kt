@@ -9,18 +9,17 @@ data class Post(
     val id: Long,
     val title: String,
     val description: String,
-    val tags: List<Tag>? = null,
+    val tags: MutableList<Tag>,
     val image: Image? = null,
-    val imageUrl: String? = null,
-    val patron: User? = null
+    val patron: User
 )
 
 
-fun Post.toPostEntity(userId: Long): PostEntity {
+fun Post.toPostEntity(): PostEntity {
     return PostEntity(
         postId = id,
         title = title,
         description = description,
-        userId = userId
+        userId = patron.id
     )
 }

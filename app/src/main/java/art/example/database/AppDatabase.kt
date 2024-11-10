@@ -15,6 +15,7 @@ import art.example.database.entities.PostWithTags
 import art.example.database.entities.TagEntity
 import art.example.database.entities.UserEntity
 import art.example.database.entities.UserWithTagsCrossRef
+import art.example.database.folderDao.FolderDao
 
 @Database(
     entities = [
@@ -31,12 +32,13 @@ import art.example.database.entities.UserWithTagsCrossRef
         FolderEntity::class,
         FolderWithPostsCrossRef::class,
     ],
-    version = 2 // Increment the version number
+    version = 1 // Increment the version number
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun postDao(): PostDao
     abstract fun tagDao(): TagDao
+    abstract fun folderDao(): FolderDao
     // Add other DAOs as needed (e.g., TagDao, PostDao)
 
     companion object {

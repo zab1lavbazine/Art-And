@@ -9,8 +9,7 @@ data class User(
     val id: Long,
     val username: String,
     val email: String,
-    var preferredTags: List<Tag>? = null,
-    var posts: List<Post>? = null
+    var preferredTags: MutableList<Tag> = mutableListOf()
 ) {
     fun toUserEntity(): UserEntity {
         return UserEntity(

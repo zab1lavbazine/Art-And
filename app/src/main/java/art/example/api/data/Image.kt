@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Image(
     val id: Long,
-    val data: String? = null
+    val file: String?,
+
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -16,14 +17,14 @@ data class Image(
         other as Image
 
         if (id != other.id) return false
-        if (!data.contentEquals(other.data)) return false
+        if (!file.contentEquals(other.file)) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = id.hashCode()
-        result = 31 * result + data.hashCode()
+        result = 31 * result + file.hashCode()
         return result
     }
 }
@@ -32,7 +33,7 @@ data class Image(
 fun Image.toImageEntity(postId: Long): ImageEntity {
     return ImageEntity(
         id = this.id,
-        data = data,
+        data = file,
         postId = postId  // Associate with the Post ID
     )
 }

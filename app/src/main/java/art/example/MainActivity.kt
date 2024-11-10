@@ -15,12 +15,11 @@ import art.example.navigation.folderScreen.CreateFolder
 import art.example.navigation.postScreen.CreatePost
 import art.example.navigation.startScreen.HelloScreen
 import art.example.navigation.startScreen.LoginScreen
-import art.example.navigation.profileScreen.MyProfile
 import art.example.navigation.postScreen.PostDetailScreen
 import art.example.navigation.postScreen.PostListScreen
 import art.example.navigation.startScreen.RegisterScreen
 import art.example.navigation.SearchScreen
-import art.example.navigation.profileScreen.UserDetailedScreen
+import art.example.navigation.profileScreen.MyProfile
 import art.example.screen.Screen
 
 class MainActivity : ComponentActivity() {
@@ -82,13 +81,16 @@ fun MyApp() {
             }
         }
 
-        composable(Screen.UserDetailedScreen.route, arguments = listOf(navArgument("userId"){ type = NavType.LongType})) {
-            navBackStackEntry ->
-            val userId = navBackStackEntry.arguments?.getLong("userId")
-            if (userId != null){
-                UserDetailedScreen(userId, navController = navController)
-            }
-        }
+//        composable(
+//            Screen.MyProfile.route,
+//            arguments = listOf(navArgument("userId") { type = NavType.LongType })
+//        ) { navBackStackEntry ->
+//            val userId = navBackStackEntry.arguments?.getLong("userId")
+//            if (userId != null) {
+//                UserDetailedScreen(userId, navController = navController)
+//            }
+//        }
+
 
         composable(
             Screen.FolderDetail.route,

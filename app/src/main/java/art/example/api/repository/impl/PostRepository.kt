@@ -2,177 +2,189 @@ package art.example.api.repository.impl
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Base64
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
-import androidx.paging.PagingSource
-import art.example.api.data.*
 import art.example.api.data.DTO.PostDTO
+import art.example.api.data.Post
 import art.example.api.repository.IPostRepository
 import art.example.api.service.PostApiService
+import art.example.api.service.ResponseItem
 import art.example.database.PostDao.PostDao
-import art.example.database.TagDao.TagDao
-import art.example.database.UserDao.UserDao
-import art.example.database.entities.PostWithTags
-import art.example.database.entities.toTag
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import java.io.ByteArrayOutputStream
 
 class PostRepository(
     private val postApiService: PostApiService, // API Service
     private val postDao: PostDao, // Post DAO
-    private val tagDao: TagDao, // Tag DAO
-    private val userDao: UserDao,
-    private val context: Context
 ) : IPostRepository {
 
-    // In-memory cache
-    private val postsCache = mutableListOf<Post>()
-
-//    // Fetch all posts (from cache, database, or API)
-//    suspend fun getPosts(pageNumber: Int): List<Post> {
-//        return try {
-//            if (postsCache.isEmpty() || pageNumber == 0) { // fetch from api if cache null or empty
-//                // Fetch from local database
-//                val localPosts = withContext(Dispatchers.IO) { postDao.getAllPostsWithDetails() }
-//                Log.d("FLOW", "GET POST FROM DATABASE: $localPosts")
-//                if (localPosts.isNotEmpty()) {
-//                    postsCache.addAll(localPosts.map { it.toPost() }) // Convert PostEntity to Post
-//                } else {
-//                    // Fetch from API
-//                    val apiPosts = postApiService.getPosts()
-//                    Log.d("FLOW", "GET POSTS FROM API: $apiPosts")
-//                    postsCache.addAll(apiPosts)
-//
-//                    // Save posts and related data in the database
-//                    withContext(Dispatchers.IO) {
-//                        apiPosts.forEach { post ->
-//                            savePost(post) // Save post, tags, and images
-//                        }
-//                    }
-//                }
-//            }
-//            postsCache
-//        } catch (e: Exception) {
-//            Log.e("PostRepository", "Error fetching posts: ${e.message}", e)
-//            emptyList()
-//        }
-//    }
 
 
-    suspend fun getPosts(pageSize: Int, pageNumber: Int): List<Post> {
+
+    suspend fun getPosts(pageSize: Int, pageNumber: Int): ResponseItem<Post> {
         return try {
             // Fetch posts from the API for the specified page number
             val response = postApiService.getPosts(pageNumber, pageSize)
             Log.d("FLOW", "Response from the api: $response")
-            val posts = response.content
-            posts
-        } catch (e: Exception) {
-            Log.d("FLOW", "ERROR while fetching recommendations $e")
-            // Handle errors (you could log the error or return an empty list)
-            emptyList()
+            response
+        }catch (e: Exception){
+            Log.d("FLOW", "ERROR getting posts")
+            ResponseItem(emptyList())
         }
     }
 
-
-    suspend fun loadTags(): List<Tag> {
-        return tagDao.loadTags().map { tag -> tag.toTag() }
+    suspend fun deletePostById(postId: Long){
+        postApiService.deletePostById(postId)
     }
+
+
+    suspend fun getPostsByUserId(userId: Long): List<Post>{
+
+        val fetchedPosts = postApiService.getPostsByUserId(userId)
+        if (fetchedPosts.isNotEmpty()){
+            return fetchedPosts
+        }
+        return emptyList()
+    }
+
+
+    suspend fun updatePost(context: Context, post: Post): Post? {
+        // Convert the image URI to MultipartBody.Part if image exists
+        val filePart = post.image?.file?.let { getMultipartFromUri(context, it) }
+
+        // Create PostDTO with the image file (MultipartBody.Part)
+        val postDTO = PostDTO(
+            title = post.title,
+            description = post.description,
+            tagsId = post.tags.map { it.id },
+            file = filePart
+        )
+
+        // RequestBody for title, description, and tagsId
+        val title = RequestBody.create("text/plain".toMediaTypeOrNull(), postDTO.title ?: "")
+        val description = RequestBody.create("text/plain".toMediaTypeOrNull(), postDTO.description ?: "")
+        val tagsId = RequestBody.create("application/json".toMediaTypeOrNull(), postDTO.tagsId.joinToString(","))
+
+        Log.d("FLOW", "Updating post with postDTO: $postDTO")
+
+        // Call the API to update the post, passing the image as part of the request
+        val updatedPost = postApiService.updatePostById(post.id, title, description, tagsId, postDTO.file)
+
+        // Check if the post was updated successfully
+        if (updatedPost != null) {
+            Log.d("FLOW", "Post updated successfully: $updatedPost")
+            return updatedPost
+        }
+
+        return null
+    }
+
+
 
     override suspend fun getPostById(id: Long): Post? {
-        // Fetch a single post from cache or database
-//            Log.d("FLOW", "FETCHING POST WITH ID : $id")
-//            var localPost = postsCache.find{ it.id == id}
-//        if (localPost == null) {
-//            localPost = postDao.getPostWithTagsAndImage(id)
-//                ?.toPost()
-//            Log.d("FLOW", "Post from postDao $localPost")
-//            localPost?.let {postsCache.add(localPost)}
-//        }
 
-        // new version for pageable
         val postApi = postApiService.getPostById(id)
-        if (postApi != null) {
-            Log.d("FLOW", "Saving post by id: $id, post: $postApi")
-            savePost(postApi)
-        }
 
         return postApi
     }
 
-    // Save post, tags, and images into the database
-    private suspend fun savePost(post: Post) {
-        withContext(Dispatchers.IO) {
+    suspend fun createPost(postDTO: PostDTO, imageBitmap: Bitmap): Post? {
             try {
-                // Save the PostEntity
-                Log.d("FLOW", "USER in the post: ${post.patron}")
-                val postEntity = post.patron?.let { post.toPostEntity(it.id) }
-                if (postEntity == null) {
-                    Log.d("FLOW", "USER NULL")
-                    throw IllegalArgumentException("No user provided")
-                }
-                postDao.insertPost(postEntity)
-                // Save the associated image if present
-                post.image?.let { image ->
-                    val imageEntity = image.toImageEntity(postId = post.id)
-                    Log.d("FLOW", "IMAGE SAVING image: $image and imageEntity: $imageEntity")
-                    postDao.insertImage(imageEntity)
-                }
+                // Convert Bitmap to MultipartBody.Part
+                val filePart = getMultipartFromBitmap(imageBitmap)
+                if (filePart != null) {
+                    // Create RequestBody for title, description, and tags
+                    val title = RequestBody.create("text/plain".toMediaTypeOrNull(), postDTO.title ?: "")
+                    val description = RequestBody.create("text/plain".toMediaTypeOrNull(), postDTO.description ?: "")
+                    val tagsId = RequestBody.create("application/json".toMediaTypeOrNull(), postDTO.tagsId.joinToString(","))
 
-                // Save tags and create cross-references for the post
-                post.tags?.let { tags ->
-                    val tagEntities = tags.map { it.toTagEntity() }
-                    tagDao.insertTags(tagEntities) // Save tags first
-                    Log.d("FLOW", "TAG saving to the database $tagEntities")
-                    val postWithTags =
-                        tags.map { tag -> PostWithTags(tagId = tag.id, postId = post.id) }
-                    postDao.insertPostsWithTags(postWithTags) // Insert the many-to-many relationships
+                    // Send the request with the PostDTO and the image file
+                  return postApiService.createPost(title, description, tagsId, filePart)
                 }
-            } catch (e: Exception) {
-                Log.e("PostRepository", "Error saving post: ${e.message}", e)
-            }
-        }
-    }
-
-    suspend fun createPost(postDTO: PostDTO, imageUrl: String) {
-        withContext(Dispatchers.IO) {
-            try {
-//                 fetch from uri
-                postDTO.file = getImageFromUrl(imageUrl)
-                Log.d("FLOW", "POST DTO postDTO: $postDTO")
-                val newFetchedPost = postApiService.createPost(postDTO)
-                newFetchedPost?.let { savePost(newFetchedPost) }
+                return null
             } catch (e: Exception) {
                 Log.e("FLOW", "Error creating post $e")
+                return null
             }
-        }
     }
 
 
-    private suspend fun getImageFromUrl(imageUrl: String): String? {
+    private suspend fun getMultipartFromUri(context: Context, uri: String): MultipartBody.Part? {
         return withContext(Dispatchers.IO) {
             try {
-                // Fetch the image as a Bitmap using Glide
-                val bitmap: Bitmap = Glide.with(context)
-                    .asBitmap()
-                    .load(imageUrl)
-                    .submit()
-                    .get()
+                // Step 1: Convert URI to Bitmap
+                val bitmap = getBitmapFromUri(context, uri) ?: return@withContext null
 
-                // Convert the Bitmap to a ByteArrayOutputStream
+                // Step 2: Convert Bitmap to ByteArray
                 val byteArrayOutputStream = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
                 val byteArray = byteArrayOutputStream.toByteArray()
 
-                // Encode the byte array to Base64
-                Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                // Step 3: Create RequestBody
+                val requestBody = RequestBody.create("image/jpeg".toMediaTypeOrNull(), byteArray)
+
+                // Step 4: Create MultipartBody.Part
+                return@withContext MultipartBody.Part.createFormData("file", "image.jpg", requestBody)
             } catch (e: Exception) {
-                // Handle the exception
+                Log.d("FLOW", "Error converting URI to multipart: $e")
                 e.printStackTrace()
                 null
             }
         }
     }
+
+
+    private suspend fun getBitmapFromUri(context: Context, uri: String): Bitmap? {
+        return try {
+            if (uri.startsWith("http")) {
+                // Handle remote image URL using Glide
+                withContext(Dispatchers.IO) {
+                    Glide.with(context)
+                        .asBitmap()
+                        .load(uri)
+                        .submit()
+                        .get()
+                }
+            } else {
+                // Handle local file URI as before
+                val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))
+                BitmapFactory.decodeStream(inputStream)
+            }
+        } catch (e: Exception) {
+            Log.e("FLOW", "Error getting Bitmap from URI: $e")
+            null
+        }
+    }
+
+
+
+
+    private suspend fun getMultipartFromBitmap(bitmap: Bitmap): MultipartBody.Part? {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Convert Bitmap to ByteArray as JPEG
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream) // Compress as JPEG
+                val byteArray = byteArrayOutputStream.toByteArray()
+
+                // Create RequestBody from byte array with MIME type "image/jpeg"
+                val requestBody = RequestBody.create("image/jpeg".toMediaTypeOrNull(), byteArray)
+
+                // Create MultipartBody.Part with .jpg extension
+                return@withContext MultipartBody.Part.createFormData("file", "image.jpg", requestBody) // Use .jpg extension
+            } catch (e: Exception) {
+                Log.d("FLOW", "Error converting bitmap to multipart: $e")
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
 
 }

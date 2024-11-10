@@ -1,5 +1,6 @@
 package art.example.api.service
 
+import art.example.api.data.Post
 import art.example.api.data.User
 import art.example.api.reponses.LoginResponse
 import art.example.api.reponses.RegisterUserDTO
@@ -10,11 +11,9 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface UserApiService {
-
-    @GET("/api/users")
-    suspend fun getUsers():List<User>
 
     @GET("/api/users/account")
     suspend fun getUserAccount(): User?
@@ -25,12 +24,5 @@ interface UserApiService {
 
     @POST("/api/auth/signup")
     suspend fun register(@Body credentials: RegisterUserDTO)
-
-    @GET("/api/users/account")
-    suspend fun getUserByUsername(): User?
-
-
-    @GET("/api/users/{id}")
-    suspend fun getUserById(userId: Long): User?
 
 }

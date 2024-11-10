@@ -1,5 +1,6 @@
 package art.example.navigation.postScreen
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -17,11 +18,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,9 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,17 +46,18 @@ import art.example.ViewModel.PostViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
-import coil.compose.rememberAsyncImagePainter
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.setValue
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.supportElements.MyModalBottomSheet
-
-import android.util.Base64
-import art.example.screen.Screen
-
+import art.example.ViewModel.FolderViewModel
+import art.example.ViewModel.TagViewModel
+import art.example.api.data.Tag
+import art.example.api.data.User
+import art.example.navigation.supportElements.ResolvePostImage
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -68,26 +68,28 @@ fun PostDetailScreen(
     navController: NavHostController
 ) {
     // Get the view model for this screen
-    val viewModel: PostViewModel = koinViewModel()
+    val postViewModel: PostViewModel = koinViewModel()
+    val folderViewModel: FolderViewModel = koinViewModel()
     val userViewModel: UserViewModel = koinViewModel()
+    val tagViewModel: TagViewModel = koinViewModel()
+
+    val currentUser by userViewModel.currentUser.observeAsState()
 
     // Observe the selected post and loading state
-    val selectedPost by viewModel.selectedPost.observeAsState()
-    val isLoading by viewModel.isLoading.observeAsState(initial = true) // Use an initial value
-
+    val selectedPost by postViewModel.selectedPost.observeAsState()
+    val isLoading by postViewModel.isLoading.observeAsState(initial = true) // Use an initial value
+    val tags by tagViewModel.tags.observeAsState(emptyList())
 
     // for the folder dialog
-    val userFolders by userViewModel.userFolders.observeAsState(emptyList())
+    val userFolders by folderViewModel.folders.observeAsState(emptyList())
+
+
     val showDialog = remember { mutableStateOf(false) }
-
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
 
-    val menuItems = listOf(
-        MenuItem(
-            label = "Edit post",
-            onClick = {}
-        ),
+    val menuItems = mutableListOf(
         MenuItem(
             label = "Add to folder",
             onClick = {
@@ -96,17 +98,37 @@ fun PostDetailScreen(
         )
     )
 
-    // Load the post details when the postId changes
-    LaunchedEffect(postId) {
-        viewModel.loadById(postId)
-    }
-
-    LaunchedEffect(showDialog.value) {
-        if (showDialog.value) {
-            Log.d("FLOW", "Loading user folders")
-            userViewModel.getUserFolders()
+    selectedPost?.let { post ->
+        if (post.patron.id == currentUser?.id) {
+            menuItems.add(
+                MenuItem(
+                    label = "Edit post",
+                    onClick = {
+                        showEditDialog = true
+                    }
+                )
+            )
+            menuItems.add(
+                MenuItem(
+                    label = "Delete post",
+                    onClick = {
+                        postViewModel.deletePostById(postId)
+                        navController.popBackStack()
+                    }
+                )
+            )
         }
     }
+
+
+    // Load the post details when the postId changes
+    LaunchedEffect(postId) {
+        postViewModel.loadById(postId)
+        userViewModel.getCurrentUser()
+        folderViewModel.getCurrentUserFolders()
+        tagViewModel.loadTags()
+    }
+
 
     // Create the Scaffold for the screen layout
     Scaffold(
@@ -134,7 +156,7 @@ fun PostDetailScreen(
                 PostCardItem(
                     post = post,
                     onAddToFolderClick = { selectedFolder ->
-                        userViewModel.savePostInFolder(post, selectedFolder)
+                        folderViewModel.savePostInFolder(post, selectedFolder)
                         showDialog.value = false // Hide dialog after saving
                     },
                     showDialog = showDialog,
@@ -152,7 +174,85 @@ fun PostDetailScreen(
         },
         menuItems = menuItems
     )
+
+    if (showEditDialog){
+        EditPostDialog(
+            post = selectedPost,
+            tagsList = tags,
+            onDismiss = { showEditDialog = false },
+            onConfirm = { updatedPost ->
+                postViewModel.updatePost(updatedPost)
+                showEditDialog = false
+            }
+        )
+    }
 }
+
+
+@SuppressLint("MutableCollectionMutableState")
+@Composable
+fun EditPostDialog(
+    post: Post?,
+    tagsList: List<Tag>,
+    onDismiss: () -> Unit,
+    onConfirm: (Post) -> Unit
+) {
+    var title by remember { mutableStateOf(post?.title ?: "") }
+    var description by remember { mutableStateOf(post?.description ?: "") }
+
+    val selectedTagIds = remember { mutableStateOf(post?.tags?.map { it.id }?.toSet() ?: emptySet()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Post") },
+        text = {
+            Column {
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") }
+                )
+                TextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") }
+                )
+
+                TagSelectionMenu(
+                    tags = tagsList,
+                    selectedTags = selectedTagIds.value,
+                    onTagSelected = { selectedTagIds.value = it }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    post?.copy(
+                        title = title,
+                        description = description,
+                        tags = selectedTagIds.value.map { id ->
+                            tagsList.find { it.id == id } ?: Tag(id, "Unknown")
+                        }.toMutableList()
+                    )?.let {
+                        onConfirm(
+                            it
+                        )
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
 
 
 @Composable
@@ -170,42 +270,8 @@ fun PostCardItem(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // Load image from URL or ByteArray
-        if (post.imageUrl != null) {
-            Image(
-                painter = rememberAsyncImagePainter(post.imageUrl),
-                contentDescription = "Post Image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.8f),
-                contentScale = ContentScale.Fit
-            )
-        } else if (post.image?.data != null) {
-            val imageBitmap = base64StringToImageBitmap(post.image.data)
-            if (imageBitmap != null)
-                Image(
-                    bitmap = imageBitmap,
-                    contentDescription = "Post Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.8f),
-                    contentScale = ContentScale.Fit
-                )
-        } else {
-            // Placeholder in case there's no image
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.8f)
-                    .background(Color.Gray) // Placeholder color
-            ) {
-                Text(
-                    text = "No Image Available",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.White
-                )
-            }
-        }
+
+        ResolvePostImage(post)
 
         // Post details
         Column(
@@ -230,28 +296,25 @@ fun PostCardItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
 
-            if (post.patron != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .clickable() {
-                            navController.navigate(Screen.UserDetailedScreen.createRoute(post.patron.id))
-                        }
-                ) {
-                    Text(
-                        text = "Posted by: ${post.patron.username}",
-                        fontSize = 14.sp,
-                        color = Color.LightGray,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Posted by:",
+                    fontSize = 14.sp,
+                    color = Color.LightGray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .padding(start = 8.dp, end = 4.dp)
+                )
 
-                }
-                Spacer(modifier = Modifier.height(4.dp))
+                UsernameTag(patron = post.patron, onClick = { Unit })
             }
+            Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                post.tags?.forEach { tag ->
+                post.tags.forEach { tag ->
                     TagBox(tag.name)
                 }
             }
@@ -269,6 +332,9 @@ fun PostCardItem(
         }
     }
 }
+
+
+
 
 
 @Composable
@@ -317,6 +383,29 @@ fun FolderSelectionDialog(
     )
 }
 
+@Composable
+fun UsernameTag(patron: User, onClick: () -> Unit){
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .background(
+                color = Color.LightGray,
+                shape = MaterialTheme.shapes.small
+            )
+            .clickable{ onClick() }
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ){
+        Text(
+            text = patron.username,
+            color = Color.Black,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+
+}
+
 
 @Composable
 fun TagBox(tag: String) {
@@ -339,24 +428,4 @@ fun TagBox(tag: String) {
     }
 }
 
-
-fun byteArrayToImageBitmap(byteArray: ByteArray): ImageBitmap? {
-    val bitmap: Bitmap? = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-    return bitmap?.asImageBitmap()
-}
-
-fun base64StringToImageBitmap(base64String: String): ImageBitmap? {
-    return try {
-        // Decode Base64 string to ByteArray
-        val byteArray = Base64.decode(base64String, Base64.DEFAULT)
-        // Decode ByteArray to Bitmap
-        val bitmap: Bitmap? = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-        // Convert Bitmap to ImageBitmap (nullable to handle possible null)
-        bitmap?.asImageBitmap()
-    } catch (e: IllegalArgumentException) {
-        // Handle decoding errors
-        e.printStackTrace()
-        null
-    }
-}
 

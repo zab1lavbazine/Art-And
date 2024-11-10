@@ -32,13 +32,6 @@ import art.example.screen.Screen
 
 
 
-
-
-
-
-
-
-
 enum class NavigationItem(
     val title: String,
     val icon: ImageVector,
