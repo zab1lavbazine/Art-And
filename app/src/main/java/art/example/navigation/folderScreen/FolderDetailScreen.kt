@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import art.example.ViewModel.FolderViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
@@ -52,10 +53,10 @@ fun FolderDetailScreen(
     folderId: Long,
     navController: NavController
 ) {
-    val userViewModel: UserViewModel = koinViewModel()
-    val selectedFolder by userViewModel.selectedFolder.observeAsState()
-    val isLoadingFolder by userViewModel.isLoadingFolder.observeAsState(initial = false)
-    val errorMessage by userViewModel.errorMessage.observeAsState()
+    val folderViewModel: FolderViewModel = koinViewModel()
+    val selectedFolder by folderViewModel.selectedFolder.observeAsState()
+    val isLoadingFolder by folderViewModel.isLoading.observeAsState(initial = false)
+    val errorMessage by folderViewModel.errorMessage.observeAsState()
 
 
     var isEditMode by remember { mutableStateOf(false) }
@@ -67,7 +68,7 @@ fun FolderDetailScreen(
 
     // Fetch folder details when the folderId changes
     LaunchedEffect(folderId) {
-        userViewModel.getDetailedFolder(folderId)
+        folderViewModel.getDetailedFolderById(folderId)
     }
 
 
@@ -84,7 +85,7 @@ fun FolderDetailScreen(
             onClick = {
                 showBottomSheet = false
                 selectedFolder?.let { folder ->
-                    userViewModel.deleteFolderById(folder.id)
+                    folderViewModel.deleteFolderById(folder.id)
                     navController.popBackStack()
                 }
             }
@@ -154,7 +155,7 @@ fun FolderDetailScreen(
                                 MenuItem(
                                     label = "Delete post",
                                     onClick = {
-                                        userViewModel.deletePostFromFolder(post, folder)
+                                        folderViewModel.deletePostFromFolder(post, folder)
                                     }
                                 )
                             )
@@ -233,10 +234,10 @@ fun FolderDetailScreen(
 
                                     Button(
                                         onClick = {
-                                            userViewModel.updateFolderInfo(
+                                            folderViewModel.updateFolderInfo(
                                                 id = folderId,
-                                                folderTitle = folderTitle,
-                                                folderDescription = folderDescription
+                                                title = folderTitle,
+                                                description = folderDescription
                                             )
                                             isEditMode = false
                                         }

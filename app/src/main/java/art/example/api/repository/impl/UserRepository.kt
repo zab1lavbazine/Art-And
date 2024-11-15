@@ -20,12 +20,6 @@ import art.example.api.service.UserApiService
 import art.example.database.PostDao.PostDao
 import art.example.database.TagDao.TagDao
 import art.example.database.UserDao.UserDao
-import art.example.database.entities.FolderWithPostsCrossRef
-import art.example.database.entities.PostEntity
-import art.example.database.entities.UserEntity
-import art.example.database.entities.UserWithTagsCrossRef
-import art.example.database.entities.toFolder
-import art.example.database.entities.toTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
@@ -35,9 +29,6 @@ class UserRepository(
     private val userApiService: UserApiService,
     private val userDao: UserDao, // Inject the DAO
     private val context: Context,
-    private val tagDao: TagDao,
-    private val postDao: PostDao,
-    private val folderApiService: FolderApiService
 ) : IUserRepository {
 
     private var currentUser: User? = null
@@ -80,144 +71,177 @@ class UserRepository(
         return sharedPreferences.getString("auth_token", null)
     }
 
-
-    suspend fun getCurrentUserFolders(): List<Folder> {
-        return try {
-            val userWithFolders = userDao.getUserByIdWithFolders(currentUser?.id ?: 0)
-            val userFolders = userWithFolders?.userFolders
-            Log.d("FLOW", "Fetched user folders from DB: $userFolders")
-            if (userFolders.isNullOrEmpty()){
-                val folders = folderApiService.getFoldersByUser()
-                folders.forEach { folder ->
-                    folder.user = currentUser
-                    saveFolder(folder)
-                }
-                Log.d("FLOW", "FOLDERS FROM API: $folders")
-                folders
-            } else {
-                userFolders.map { it.toFolder() }
-            }
-        } catch (e : Exception){
-                Log.e("FLOW", "Error fetching folders: ${e.message}", e)
-                emptyList()
-            }
-        }
-
-
-
-    suspend fun getFolderById(folderId: Long): Folder? {
-        return try {
-            val localFolder = userDao.getFolderById(folderId)
-            Log.d("FLOW", "get folder by id: $folderId, localFolder: $localFolder")
-            if (localFolder != null) {
-                val detailedFolder = userDao.getDetailedFolderById(folderId)
-                val userInFolder = detailedFolder.folderEntity.userFolderId?.let {
-                    userDao.getUserById(
-                        it
-                    )
-                }
-                val folder = detailedFolder.toFolder()
-                val postsFromFolder =
-                    postDao.getDetailedPostsById(detailedFolder.posts.map { it.postId })
-                folder.posts = postsFromFolder.map { it.toPost() }.toMutableList()
-
-                if (userInFolder != null) {
-                    folder.user = userInFolder.toUser()
-                }
-
-                // full folder completed and returned
-                folder
-            } else {
-                val apiFolder = folderApiService.getFolderById(folderId)
-                saveFolder(apiFolder!!)
-                apiFolder
-            }
-        } catch (e : Exception){
-            Log.e("FLOW", "Error fetching folder with id: $folderId")
-            null
-        }
-    }
-
-
-
-    @Transaction
-    suspend fun updateFolderWithPost(folder: Folder, post: Post): Folder?{
-            return try {
-                // check folder for that post in the posts
-                if (!folder.posts?.contains(post)!!) {
-                    folder.posts = (folder.posts ?: mutableListOf()).apply { add(post) }
-                    val folderDTO = folder.toFolderDTO()
-                    val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
-                    saveFolder(newFolder!!)
-                }
-                folder
-            } catch (e: Exception) {
-                Log.e("FLOW", "ERROR with updating folder with post")
-                null
-            }
-    }
-
-    suspend fun updateFolderById(id: Long, folderTitle: String, folderDescription: String): Folder?{
-        val folder = getFolderById(id)
-        if (folder != null) {
-            val postIds = folder.posts?.map { post -> post.id } ?: emptyList()
-            val newFolderDTO = FolderDTO(title =  folderTitle, description = folderDescription, postIds = postIds)
-            val newFolder = folderApiService.updateFolderById(id, newFolderDTO)
-           return  newFolder
+    suspend fun getLocalUserById(userId: Long): User? {
+        val userDat = userDao.getUserById(userId)
+        if (userDat != null){
+            return userDat.toUser()
         }
         return null
     }
 
 
-    @Transaction
-    suspend fun deletePostFromFolder(folder: Folder, post: Post): Folder?{
-        return try {
-            if (!folder.posts?.contains(post)!!){
-                Log.d("FLOW", "Folder do not have that post")
-                null
-            } else {
-                folder.posts!!.remove(post)
-                val folderDTO = folder.toFolderDTO()
-                val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
-                Log.d("FLOW", "new folder after deleting folder: $newFolder")
-                saveFolder(newFolder!!)
-                postDao.deletePostWithFolder(folderId = folder.id, postId = post.id)
-                newFolder
-            }
-        } catch (e: Exception) {
-            Log.e("FLOW", "ERROR with deleting post from folder")
-            null
-        }
-    }
-
-    @Transaction
-    suspend fun deleteFolderById(folderId: Long){
-        folderApiService.deleteFolderById(folderId)
-        Log.d("FLOW", "Folder deleted in api service")
-
-        // delete folder from the local repository
-        userDao.deleteFolderById(folderId)
-        Log.d("FLOW", "Folder deleted in local repository")
-    }
-
-    private suspend fun saveFolder(folder: Folder) {
+    suspend fun saveUser(user: User){
         withContext(Dispatchers.IO){
             try {
-                // inserting folder in the database
-                val folderEntity = folder.toFolderEntity()
-                userDao.insertFolder(folderEntity)
-
-                // creating connection between folder and posts
-                val foldersWithPosts = folder.posts?.map { post ->
-                    FolderWithPostsCrossRef(folder.id, post.id)
-                }
-                foldersWithPosts?.let { postDao.insertFoldersWithPosts(foldersWithPosts) }
-
-            } catch (e : Exception){
-                Log.e("FLOW", "error with saving new folder")
+                userDao.insertUser(user.toUserEntity())
+            } catch (e: Exception){
+                Log.d("FLOW", "ERROR saving user: $user")
             }
         }
     }
+
+
+//    suspend fun getCurrentUserFolders(): List<Folder> {
+//        return try {
+//            val userWithFolders = userDao.getUserByIdWithFolders(currentUser?.id ?: 0)
+//            val userFolders = userWithFolders?.userFolders
+//            Log.d("FLOW", "Fetched user folders from DB: $userFolders")
+//            if (userFolders.isNullOrEmpty()){
+//                val folders = folderApiService.getFoldersByUser()
+//                folders.forEach { folder ->
+//                    folder.user = currentUser
+//                    saveFolder(folder)
+//                }
+//                Log.d("FLOW", "FOLDERS FROM API: $folders")
+//                folders
+//            } else {
+//                userFolders.map { it.toFolder() }
+//            }
+//        } catch (e : Exception){
+//                Log.e("FLOW", "Error fetching folders: ${e.message}", e)
+//                emptyList()
+//            }
+//        }
+
+
+//    // method to get user folders from api
+//    @Transaction
+//    suspend fun getUserFoldersById(userId: Long): List<Folder>{
+//        val fetchedUser = userApiService.getUserById(userId)
+//        val fetchedFolders = folderApiService.getFoldersByUserId(userId)
+//        fetchedFolders.forEach{ folder ->
+//            folder.user  = fetchedUser
+//            saveFolder(folder)
+//        }
+//        return fetchedFolders
+//    }
+
+
+
+//
+//    suspend fun getFolderById(folderId: Long): Folder? {
+//        return try {
+//            val localFolder = userDao.getFolderById(folderId)
+//            Log.d("FLOW", "get folder by id: $folderId, localFolder: $localFolder")
+//            if (localFolder != null) {
+//                val detailedFolder = userDao.getDetailedFolderById(folderId)
+//                val userInFolder = detailedFolder.folderEntity.userFolderId?.let {
+//                    userDao.getUserById(
+//                        it
+//                    )
+//                }
+//                val folder = detailedFolder.toFolder()
+//                val postsFromFolder =
+//                    postDao.getDetailedPostsById(detailedFolder.posts.map { it.postId })
+//                folder.posts = postsFromFolder.map { it.toPost() }.toMutableList()
+//
+//                if (userInFolder != null) {
+//                    folder.user = userInFolder.toUser()
+//                }
+//
+//                // full folder completed and returned
+//                folder
+//            } else {
+//                val apiFolder = folderApiService.getFolderById(folderId)
+//                saveFolder(apiFolder!!)
+//                apiFolder
+//            }
+//        } catch (e : Exception){
+//            Log.e("FLOW", "Error fetching folder with id: $folderId")
+//            null
+//        }
+//    }
+
+
+//
+//    @Transaction
+//    suspend fun updateFolderWithPost(folder: Folder, post: Post): Folder?{
+//            return try {
+//                // check folder for that post in the posts
+//                if (!folder.posts?.contains(post)!!) {
+//                    folder.posts = (folder.posts ?: mutableListOf()).apply { add(post) }
+//                    val folderDTO = folder.toFolderDTO()
+//                    val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
+//                    saveFolder(newFolder!!)
+//                }
+//                folder
+//            } catch (e: Exception) {
+//                Log.e("FLOW", "ERROR with updating folder with post")
+//                null
+//            }
+//    }
+
+//    suspend fun updateFolderById(id: Long, folderTitle: String, folderDescription: String): Folder?{
+//        val folder = getFolderById(id)
+//        if (folder != null) {
+//            val postIds = folder.posts?.map { post -> post.id } ?: emptyList()
+//            val newFolderDTO = FolderDTO(title =  folderTitle, description = folderDescription, postIds = postIds)
+//            val newFolder = folderApiService.updateFolderById(id, newFolderDTO)
+//           return  newFolder
+//        }
+//        return null
+//    }
+
+
+//    @Transaction
+//    suspend fun deletePostFromFolder(folder: Folder, post: Post): Folder?{
+//        return try {
+//            if (!folder.posts?.contains(post)!!){
+//                Log.d("FLOW", "Folder do not have that post")
+//                null
+//            } else {
+//                folder.posts!!.remove(post)
+//                val folderDTO = folder.toFolderDTO()
+//                val newFolder = folderApiService.updateFolderById(folder.id, folderDTO)
+//                Log.d("FLOW", "new folder after deleting folder: $newFolder")
+//                saveFolder(newFolder!!)
+//                postDao.deletePostWithFolder(folderId = folder.id, postId = post.id)
+//                newFolder
+//            }
+//        } catch (e: Exception) {
+//            Log.e("FLOW", "ERROR with deleting post from folder")
+//            null
+//        }
+//    }
+
+//    @Transaction
+//    suspend fun deleteFolderById(folderId: Long){
+//        folderApiService.deleteFolderById(folderId)
+//        Log.d("FLOW", "Folder deleted in api service")
+//
+//        // delete folder from the local repository
+//        userDao.deleteFolderById(folderId)
+//        Log.d("FLOW", "Folder deleted in local repository")
+//    }
+//
+//    private suspend fun saveFolder(folder: Folder) {
+//        withContext(Dispatchers.IO){
+//            try {
+//                // inserting folder in the database
+//                val folderEntity = folder.toFolderEntity()
+//                userDao.insertFolder(folderEntity)
+//
+//                // creating connection between folder and posts
+//                val foldersWithPosts = folder.posts?.map { post ->
+//                    FolderWithPostsCrossRef(folder.id, post.id)
+//                }
+//                foldersWithPosts?.let { postDao.insertFoldersWithPosts(foldersWithPosts) }
+//
+//            } catch (e : Exception){
+//                Log.e("FLOW", "error with saving new folder")
+//            }
+//        }
+//    }
 
 
     suspend fun register(userCred: RegisterUserDTO){
@@ -231,46 +255,55 @@ class UserRepository(
 
 
 
-
-    suspend fun createFolder(title: String, description: String): Folder? {
-        return try {
-            // creating folder dto to send to the api
-            val folderDTO = FolderDTO(title, description, emptyList())
-            val folder = folderApiService.createFolder(folderDTO)
-            saveFolder(folder!!)
-            folder
-        } catch (e: Exception) {
-            Log.e("FLOW", "Error creating folder: ${e.message}", e)
-            null
-        }
-    }
-
+//
+//    suspend fun createFolder(title: String, description: String): Folder? {
+//        return try {
+//            // creating folder dto to send to the api
+//            val folderDTO = FolderDTO(title, description, emptyList())
+//            val folder = folderApiService.createFolder(folderDTO)
+//            saveFolder(folder!!)
+//            folder
+//        } catch (e: Exception) {
+//            Log.e("FLOW", "Error creating folder: ${e.message}", e)
+//            null
+//        }
+//    }
+//
 
     // Get a specific user either from the API or fallback to the local database
     @Transaction
-    suspend fun getUserAccount(id: Long): User? {
+    suspend fun getUserAccount(): User? {
         return try {
+            // returning current user
+            if (currentUser != null){
+                return currentUser
+            }
+
+            // getting user from api
             val user = userApiService.getUserAccount() // Fetch from API
             Log.d("FLOW", "Fetched user from API: $user")
             createUser(user!!)
+            // saving in the current user
+            currentUser = user
             // return user
             user
         } catch (e: Exception) {
             Log.e("FLOW", "Error fetching user from API, loading from local DB", e)
-            // Fallback to local database
-            val userEntity = userDao.getUserById(id) ?: return null
-            // get user tags from database
-            val userTags = userDao.getUserByIdWithTags(id)
-            val user = userEntity.toUser()
-            user.preferredTags = userTags.tags.map { it.toTag() }
-            // posts
-            val userWithPosts = userDao.getUserByIdWithPosts(id)
-            val postsWithDetails = postDao.getDetailedPostsById(userWithPosts.userPosts.map { it.postId })
-            user.posts = postsWithDetails.map { it.toPost() }
-
-            user
+            null
         }
     }
+
+//    @Transaction
+//    suspend fun getCurrentUserPosts(userId: Long): List<Post>{
+//        return try {
+//            val posts = userApiService.getPostsByUserId(userId)
+//            posts
+//        } catch (e : Exception) {
+//            Log.d("FLOW", "Error fetching post for user")
+//            emptyList()
+//        }
+//    }
+
 
     private suspend fun createUser(user: User){
         withContext(Dispatchers.IO){
@@ -278,15 +311,7 @@ class UserRepository(
                 user.let {
                     // insert user in the database
                     userDao.insertUser(it.toUserEntity())
-                    //insert posts in the database
-                    it.posts?.let { posts ->
-                        postDao.insertPosts(posts.map { post -> post.toPostEntity(user.id) })
-                    }
-
-                    // insert tags
-                    it.preferredTags?.let { tags -> tagDao.insertTags(tags.map { tag -> tag.toTagEntity() }) }
-                    it.preferredTags?.forEach{ tags -> userDao.insertUserWithTag(UserWithTagsCrossRef(user.id, tags.id)) }
-                } // Save to DB new folders
+                }
             } catch (e : Exception){
                 Log.e("FLOW", "error with creating user")
             }
@@ -309,7 +334,7 @@ class UserRepository(
             saveAuthTokenToSharedPreferences(authToken!!)
 
             // Fetch the user details using the token
-            val loggedInUser = userApiService.getUserByUsername()
+            val loggedInUser = userApiService.getUserAccount()
 
             // Save the user credentials
             if (loggedInUser != null) {

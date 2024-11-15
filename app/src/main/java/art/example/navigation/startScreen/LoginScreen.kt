@@ -27,7 +27,7 @@ import art.example.ViewModel.UserViewModel
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "SuspiciousIndentation")
 @Composable
 fun LoginScreen(
     navController: NavHostController,

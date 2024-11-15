@@ -1,22 +1,38 @@
 package art.example.navigation.postScreen
 
 import android.annotation.SuppressLint
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import art.example.ViewModel.PostViewModel
+import art.example.ViewModel.TagViewModel
 import art.example.api.data.DTO.PostDTO
+import art.example.api.data.Tag
 import art.example.navigation.MyTopAppBar
+import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("MutableCollectionMutableState")
@@ -24,20 +40,27 @@ import org.koin.androidx.compose.koinViewModel
 fun CreatePost(navController: NavController) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf("") } // Handle image URL
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null)}
 
     val postViewModel: PostViewModel = koinViewModel()
+    val tagViewModel: TagViewModel = koinViewModel()
     val isLoading by postViewModel.isLoading.observeAsState(false)
     val errorMessage by postViewModel.errorMessage.observeAsState()
-    val tags by postViewModel.tags.observeAsState(emptyList())
+    val tags by tagViewModel.tags.observeAsState(emptyList())
 
     // Track selected tags using a set for better performance and avoiding duplicates
     var selectedTags by remember { mutableStateOf(setOf<Long>()) }
 
+
+
+    val context = LocalContext.current
     // Load tags when the composable is first launched
     LaunchedEffect(Unit) {
-        postViewModel.loadTags()
+        tagViewModel.loadTags()
     }
+
+
+
 
     // Using Scaffold for top bar and padding
     Scaffold(
@@ -79,46 +102,32 @@ fun CreatePost(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Image URL Input
-                TextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    label = { Text("Image URL") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+
+                Button(onClick = {
+                    // Call the function and pass a lambda to update imageBitmap
+                    pasteImageFromClipboard(context) { bitmap ->
+                        imageBitmap = bitmap
+                    }
+                }) {
+                    Text("Paste Image")
+                }
+
+                // If an image is pasted, show a preview
+                imageBitmap?.let {
+                    Image(bitmap = it.asImageBitmap(), contentDescription = "Pasted Image")
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Tag Selection
-                Text(text = "Select Tags:", fontSize = 18.sp)
-
-                LazyColumn {
-                    items(tags) { tag ->
-                        // Check if the tag is selected
-                        val isSelected = selectedTags.contains(tag.id) // Assuming Tag has an id property
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable {
-                                    selectedTags = if (isSelected) {
-                                        selectedTags - tag.id // Deselect the tag
-                                    } else {
-                                        selectedTags + tag.id // Select the tag
-                                    }
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = isSelected,
-                                onCheckedChange = null // Handled in the Row's click listener
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = tag.name) // Assuming Tag has a name property
-                        }
+                // Use the custom TagSelectionMenu for selecting tags
+                TagSelectionMenu(
+                    tags = tags,
+                    selectedTags = selectedTags,
+                    onTagSelected = { newSelectedTags ->
+                        selectedTags = newSelectedTags // Update selected tags
                     }
-                }
-
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Submit Button
@@ -130,11 +139,11 @@ fun CreatePost(navController: NavController) {
                             tagsId = selectedTags.toList(), // Convert set to list
                         )
 
-                        // Call the submitPost method
-                        postViewModel.submitPost(postDTO, imageUrl)
-
+                        if (imageBitmap != null){
+                            postViewModel.submitPost(postDTO, imageBitmap!!)
+                        }
                         // Navigate back or perform other actions
-                        navController.popBackStack()
+                        navController.navigate(Screen.PostsScreen.route)
                     },
                     modifier = Modifier.align(Alignment.End) // Align button to the right
                 ) {
@@ -147,5 +156,117 @@ fun CreatePost(navController: NavController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TagSelectionMenu(
+    tags: List<Tag>, // List of tags to display
+    selectedTags: Set<Long>, // Set of selected tags
+    onTagSelected: (Set<Long>) -> Unit, // Callback to update selected tags
+) {
+    var expanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+
+    // Button to toggle the dropdown
+    Button(onClick = { expanded = !expanded }) {
+        Text("Select Tags")
+    }
+
+    // Show the Dropdown Menu when expanded is true
+    if (expanded) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(2.dp, Color.Gray)
+                .padding(16.dp)
+        ) {
+                Column {
+                    // Make the dropdown scrollable with LazyColumn
+                    LazyColumn(
+                        modifier = Modifier
+                            .heightIn(max = 300.dp)
+                            .padding(8.dp)
+                    ) {
+                        items(tags) { tag ->
+                            val isSelected = selectedTags.contains(tag.id)
+
+                            DropdownMenuItem(
+                                onClick = {
+                                    // Toggle selection state for the tag
+                                    val newSelectedTags = if (isSelected) {
+                                        selectedTags - tag.id // Deselect the tag
+                                    } else {
+                                        selectedTags + tag.id // Select the tag
+                                    }
+                                    onTagSelected(newSelectedTags) // Pass updated selected tags
+                                },
+                                text = { Text(text = tag.name) }, // Display tag name
+                                modifier = Modifier.fillMaxWidth(), // Modify the width to fill the menu
+                                leadingIcon = {
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = null // Handled in the DropdownMenuItem's click listener
+                                    )
+                                },
+                                trailingIcon = {
+                                    if (isSelected) {
+                                        Icon(Icons.Filled.Check, contentDescription = "Selected")
+                                    }
+                                },
+                                enabled = true, // Enable all menu items
+                                contentPadding = PaddingValues(start = 16.dp, end = 16.dp) // Add padding
+                            )
+                        }
+                    }
+
+                    // Done button to close the dropdown
+                    Button(
+                        onClick = { expanded = false },
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 8.dp)
+                    ) {
+                        Text("Done")
+                    }
+                }
+
+        }
+    }
+}
+
+
+
+
+fun pasteImageFromClipboard(context: Context, onImageUpdated: (Bitmap?) -> Unit) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+    // Check if the clipboard has valid data
+    if (clipboard.hasPrimaryClip()) {
+        val clipData = clipboard.primaryClip
+        val item = clipData?.getItemAt(0)
+
+        // Check if the clipboard item is a URI (image data)
+        val uri = item?.uri
+        if (uri != null) {
+            // Try to load the image from the URI
+            try {
+                val bitmap = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    BitmapFactory.decodeStream(inputStream)
+                }
+                onImageUpdated(bitmap) // Update the image with the retrieved bitmap
+            } catch (e: Exception) {
+                // Handle error gracefully if the image loading fails
+                Toast.makeText(context, "Failed to load image from clipboard", Toast.LENGTH_SHORT).show()
+                onImageUpdated(null) // Optionally, clear the image or handle accordingly
+            }
+        } else {
+            // The clipboard data is not a valid image URI
+            Toast.makeText(context, "No image found in clipboard", Toast.LENGTH_SHORT).show()
+            onImageUpdated(null) // Optionally, clear the image or handle accordingly
+        }
+    } else {
+        // Clipboard is empty or doesn't contain valid data
+        Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+        onImageUpdated(null) // Optionally, clear the image or handle accordingly
     }
 }

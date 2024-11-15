@@ -8,27 +8,27 @@ import art.example.api.repository.impl.PostRepository
 
 class PostPagingSource(
     private val postRepository: PostRepository,
-    private val pageSize: Int = 20 // todo() change to 20 , 5 is testing example
+    private val pageSize: Int = 5 // todo() change to 20 , 5 is testing example
 ) : PagingSource<Int, Post>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
-        // Determine the page number to load
-        val pageNumber = params.key ?: 0 // Default to page 0 if key is null
-
         return try {
-            // Fetch posts from the repository
+            // Determine the page number to load
+            val pageNumber = params.key ?: 0 // Default to page 0 if key is null
+
             val response = postRepository.getPosts(pageSize, pageNumber)
 
-            Log.d("FLOW", "Response in the load: $response")
+            val nextKey = if (response.content.isEmpty()) null else pageNumber + 1
+            val prevKey = if (pageNumber == 0) null else pageNumber - 1
+
 
             LoadResult.Page(
-                data = response,
-                prevKey = if (pageNumber == 0) null else pageNumber - 1, // Previous page key
-                nextKey = if (response.isEmpty()) null else pageNumber + 1 // Next page key
+                data = response.content,
+                prevKey = prevKey,
+                nextKey = nextKey
             )
-        } catch (exception: Exception) {
-            // Handle exceptions (e.g., log the error)
-            LoadResult.Error(exception)
+        }catch (e: Exception){
+            LoadResult.Error(e)
         }
     }
 

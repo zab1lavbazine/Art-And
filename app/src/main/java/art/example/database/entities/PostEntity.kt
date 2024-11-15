@@ -30,26 +30,14 @@ data class PostWithTagsAndImage(
         parentColumn = "postId",
         entityColumn = "id"
     )
-    val images: List<ImageEntity>,
+    val images: ImageEntity,
     @Relation(
         parentColumn = "postId",
         entityColumn = "tagId",
         associateBy = Junction(PostWithTags::class)
     )
     val tags: List<TagEntity>
-) {
-    // Convert to domain model Post
-    fun toPost(): Post {
-        return Post(
-            id = post.postId,
-            title = post.title,
-            description = post.description,
-            tags = tags.map { it.toTag() }, // Map TagEntity to Tag
-            image = images.firstOrNull()?.toImage() // Assuming only one image per post
-        )
-    }
-}
-
+)
 
 
 

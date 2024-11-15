@@ -21,6 +21,9 @@ interface FolderApiService {
     @GET("/api/folders/user")
     suspend fun getFoldersByUser(): List<Folder>
 
+//    @GET("/api/folders/user/id")
+//    suspend fun getFoldersByUserId(): List<Folder>
+
     @POST("/api/folders")
     suspend fun createFolder( @Body folderDTO: FolderDTO): Folder?
 
@@ -30,4 +33,7 @@ interface FolderApiService {
 
     @DELETE("/api/folders/{id}")
     suspend fun deleteFolderById(@Path("id") id : Long)
+
+    @GET("/api/folders/user")
+    suspend fun getFoldersByUserId(): List<Folder>
 }

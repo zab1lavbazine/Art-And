@@ -37,6 +37,11 @@ interface PostDao {
 
 
     @Transaction
+    @Query("SELECT * FROM posts WHERE userId = :userId")
+    suspend fun getDetailedPostsByUserId(userId: Long): MutableList<PostWithTagsAndImage>
+
+
+    @Transaction
     @Query("SELECT * FROM posts where postId = :postId")
     suspend fun getPostWithDetails(postId: Long): PostWithTagsAndImage?
 
