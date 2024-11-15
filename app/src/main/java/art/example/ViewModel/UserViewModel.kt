@@ -22,22 +22,9 @@ class UserViewModel(
 
     private val sharedPreferences = context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
 
-    // LiveData for the selected user
-    private val _selectedUser = MutableLiveData<User?>()
-    val selectedUser: LiveData<User?> get() = _selectedUser
-
-    private val _users = MutableLiveData<List<User>>()
-    val users: LiveData<List<User>> get() = _users
-
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _isLoadingPosts = MutableLiveData<Boolean>(false)
-    val isLoadingPosts: LiveData<Boolean> = _isLoadingPosts
-
-
-    private val _isLoadingFolder = MutableLiveData<Boolean>(false)
-    val isLoadingFolder:LiveData<Boolean> = _isLoadingFolder
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
@@ -46,28 +33,39 @@ class UserViewModel(
     val currentUser: LiveData<User?> get() = _currentUser
 
 
-    private val _selectedFolder = MutableLiveData<Folder?>()
-    val selectedFolder: LiveData<Folder?> get() = _selectedFolder
-
-
-    private val _userFolders = MutableLiveData<List<Folder>>()
-    val userFolders: LiveData<List<Folder>> get() = _userFolders
 
 
 
-    fun getUserFolders() {
-        viewModelScope.launch {
-            _isLoadingPosts.value = true
-            try {
-                val fetchedFolders = userRepository.getCurrentUserFolders()
-                _userFolders.value = fetchedFolders
-            } catch (e: Exception) {
-                // Handle error
-            } finally {
-                _isLoadingPosts.value = false
-            }
-        }
-    }
+//
+//    fun getUserFolders() {
+//        viewModelScope.launch {
+//            _isLoadingPosts.value = true
+//            try {
+//                val fetchedFolders = userRepository.getCurrentUserFolders()
+//                _userFolders.value = fetchedFolders
+//            } catch (e: Exception) {
+//                // Handle error
+//            } finally {
+//                _isLoadingPosts.value = false
+//            }
+//        }
+//    }
+//
+//    fun getUserFoldersById(userId: Long){
+//        viewModelScope.launch {
+//            _isLoading.value = true
+//            try {
+//                val userFolders = userRepository.getUserFoldersById(userId)
+//               _userFolders.value = userFolders
+//                Log.d("FLOW", "USER folders $userFolders")
+//            } catch(e : Exception){
+//                Log.d("FLOW", "ERROR getting folders for userId: $userId")
+//
+//            } finally {
+//                _isLoading.value = false
+//            }
+//        }
+//    }
 
 
 
@@ -76,32 +74,32 @@ class UserViewModel(
     }
 
 
-    fun getDetailedFolder(folderId: Long){
-        viewModelScope.launch {
-            _isLoadingFolder.value = true
-            try {
-                val fetchedFolder = userRepository.getFolderById(folderId)
-                _selectedFolder.value = fetchedFolder
-            } catch (e: Exception){
-                Log.d("FLOW", "ERROR with fetching folder with id: $folderId")
-            } finally {
-                _isLoadingFolder.value = false
-            }
-        }
-    }
+//    fun getDetailedFolder(folderId: Long){
+//        viewModelScope.launch {
+//            _isLoadingFolder.value = true
+//            try {
+//                val fetchedFolder = userRepository.getFolderById(folderId)
+//                _selectedFolder.value = fetchedFolder
+//            } catch (e: Exception){
+//                Log.d("FLOW", "ERROR with fetching folder with id: $folderId")
+//            } finally {
+//                _isLoadingFolder.value = false
+//            }
+//        }
+//    }
 
 
     fun getCurrentUser() {
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
                 // Get the saved user ID from SharedPreferences
                 val userId = sharedPreferences.getLong("current_user_id", -1)
                 Log.d("FLOW", "Current user ID: $userId")
                 if (userId != -1L) {
-                    // Fetch the current user from the repository
-                    val curr = userRepository.getUserAccount(userId) // Fetch user by ID
-                    _currentUser.value = curr
+                    val user = userRepository.getUserAccount()
+                    _currentUser.value = user
                 } else {
                     _currentUser.value = null // Handle the case where user ID is invalid
                 }
@@ -114,78 +112,78 @@ class UserViewModel(
     }
 
 
-    fun savePostInFolder(post: Post, folder: Folder){
-        viewModelScope.launch {
-            try {
-                userRepository.updateFolderWithPost(folder, post)
-            }catch (e : Exception){
-                Log.e("FLOW", "ERROR with adding post: $post to folder: $folder")
-            }
-        }
-    }
+//    fun savePostInFolder(post: Post, folder: Folder){
+//        viewModelScope.launch {
+//            try {
+//                userRepository.updateFolderWithPost(folder, post)
+//            }catch (e : Exception){
+//                Log.e("FLOW", "ERROR with adding post: $post to folder: $folder")
+//            }
+//        }
+//    }
 
 
-    fun deletePostFromFolder(post: Post, folder: Folder) {
-        viewModelScope.launch {
-            try {
-                Log.d("FLOW", "Deleting post: $post from the folder: $folder")
-                val newFolder = userRepository.deletePostFromFolder(folder, post)
-                _selectedFolder.value = newFolder
-                Log.d("FLOW", "New selected folder $selectedFolder")
-            } catch (e: Exception) {
-                Log.e("FLOW", "Error deleting post: $post from folder: $folder")
-                _errorMessage.value = "Error deleting post. Please try again."
-            }
-        }
-    }
+//    fun deletePostFromFolder(post: Post, folder: Folder) {
+//        viewModelScope.launch {
+//            try {
+//                Log.d("FLOW", "Deleting post: $post from the folder: $folder")
+//                val newFolder = userRepository.deletePostFromFolder(folder, post)
+//                _selectedFolder.value = newFolder
+//                Log.d("FLOW", "New selected folder $selectedFolder")
+//            } catch (e: Exception) {
+//                Log.e("FLOW", "Error deleting post: $post from folder: $folder")
+//                _errorMessage.value = "Error deleting post. Please try again."
+//            }
+//        }
+//    }
+//
+//    fun deleteFolderById(folderId : Long){
+//        viewModelScope.launch {
+//            try {
+//                Log.d("FLOW", "DELETING folder with id: $folderId")
+//                userRepository.deleteFolderById(folderId)
+//            } catch (e: Exception){
+//                Log.d("FLOW", "Error while deleting folder by id: $folderId")
+//            }
+//        }
+//    }
 
-    fun deleteFolderById(folderId : Long){
-        viewModelScope.launch {
-            try {
-                Log.d("FLOW", "DELETING folder with id: $folderId")
-                userRepository.deleteFolderById(folderId)
-            } catch (e: Exception){
-                Log.d("FLOW", "Error while deleting folder by id: $folderId")
-            }
-        }
-    }
 
+//    fun createFolder(title: String, description: String) {
+//        viewModelScope.launch {
+//            _isLoading.value = true
+//            _errorMessage.value = null // Clear previous error message
+//            try {
+//                val newFolder = userRepository.createFolder(title, description)
+//                if (newFolder != null) {
+//                    // Update the list of user folders
+//                    val updatedFolders = _userFolders.value?.toMutableList() ?: mutableListOf()
+//                    updatedFolders.add(newFolder)
+//                    _userFolders.value = updatedFolders
+//                } else {
+//                    _errorMessage.value = "Failed to create folder. Please try again."
+//                }
+//            } catch (e: Exception) {
+//                _errorMessage.value = "Failed to create folder. Please try again."
+//            } finally {
+//                _isLoading.value = false
+//            }
+//        }
+//    }
 
-    fun createFolder(title: String, description: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _errorMessage.value = null // Clear previous error message
-            try {
-                val newFolder = userRepository.createFolder(title, description)
-                if (newFolder != null) {
-                    // Update the list of user folders
-                    val updatedFolders = _userFolders.value?.toMutableList() ?: mutableListOf()
-                    updatedFolders.add(newFolder)
-                    _userFolders.value = updatedFolders
-                } else {
-                    _errorMessage.value = "Failed to create folder. Please try again."
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Failed to create folder. Please try again."
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun updateFolderInfo(id: Long, folderTitle: String, folderDescription: String) {
-        viewModelScope.launch {
-            _errorMessage.value = null
-            try {
-                val newFolder = userRepository.updateFolderById(id, folderTitle, folderDescription)
-                Log.d("FLOW", "NEW folder from the api folder: $newFolder")
-                _selectedFolder.value = newFolder
-            } catch( e: Exception){
-                Log.d("FLOW", "error with updating folder by id: $id")
-                _errorMessage.value = "Failed to update folder, try again"
-            }
-        }
-    }
+//    fun updateFolderInfo(id: Long, folderTitle: String, folderDescription: String) {
+//        viewModelScope.launch {
+//            _errorMessage.value = null
+//            try {
+//                val newFolder = userRepository.updateFolderById(id, folderTitle, folderDescription)
+//                Log.d("FLOW", "NEW folder from the api folder: $newFolder")
+//                _selectedFolder.value = newFolder
+//            } catch( e: Exception){
+//                Log.d("FLOW", "error with updating folder by id: $id")
+//                _errorMessage.value = "Failed to update folder, try again"
+//            }
+//        }
+//    }
 
 
     fun register(email : String, username: String, password: String, onRegisterSuccess: () -> Unit ){

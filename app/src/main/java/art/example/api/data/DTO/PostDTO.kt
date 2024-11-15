@@ -6,5 +6,5 @@ data class PostDTO(
     var title: String? = null,
     var description: String? = null,
     var tagsId: List<Long> = emptyList(),
-    var file: String? = null
+    var file: MultipartBody.Part? = null
 )

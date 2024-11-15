@@ -7,17 +7,9 @@ data class Folder(
     val id: Long,
     val title : String,
     val description: String,
-    var user: User? = null,
-    var posts: MutableList<Post>? = null
-) {
-    fun toFolderDTO(): FolderDTO {
-        return FolderDTO(
-            title = title,
-            description = description,
-            postIds = posts?.map { it.id } ?: emptyList()
-        )
-    }
-}
+    var user: User?,
+    var posts: MutableList<Post>
+)
 
 
 fun Folder.toFolderEntity(): FolderEntity {
@@ -25,6 +17,6 @@ fun Folder.toFolderEntity(): FolderEntity {
         folderId = this.id,
         title = this.title,
         description = this.description,
-        userFolderId = this.user?.id
+        userFolderId = this.user?.id ?: -1L // error if user id is -1L
     )
 }

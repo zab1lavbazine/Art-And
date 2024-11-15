@@ -12,16 +12,9 @@ import art.example.api.data.Folder
 data class FolderEntity(
     @PrimaryKey val folderId: Long,
     val title: String,
-    val userFolderId: Long? = null,
+    val userFolderId: Long,
     val description: String
 )
-fun FolderEntity.toFolder(): Folder {
-    return Folder(
-        id = this.folderId,
-        title = this.title,
-        description = this.description
-    )
-}
 
 
 
@@ -43,12 +36,4 @@ data class FolderWithPosts (
         associateBy = Junction(FolderWithPostsCrossRef::class)
     )
     val posts: List<PostEntity>
-){
-    fun toFolder(): Folder{
-        return Folder(
-            id = folderEntity.folderId,
-            title =  folderEntity.title,
-            description = folderEntity.description
-        )
-    }
-}
+)

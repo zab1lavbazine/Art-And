@@ -20,7 +20,6 @@ data class ImageEntity(
     @PrimaryKey val id: Long,
     val postId: Long, // Foreign key referencing PostEntity
     val data: String?, // Your image data
-//    val imageUrl: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -45,13 +44,10 @@ data class ImageEntity(
         return result
     }
 
-    fun toImage(): Image? {
-        return data?.let {
-            Image(
-                id = id,
-                data = it
-            )
-        }
-
+    fun toImage(): Image {
+        return Image(
+            id = id,
+            file = data
+        )
     }
 }

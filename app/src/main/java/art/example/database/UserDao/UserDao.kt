@@ -40,18 +40,18 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserById(userId: Long): UserEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFolder(folder: FolderEntity)
+//    @Insert(onConflict = OnConflictStrategy.REPLACE)
+//    suspend fun insertFolder(folder: FolderEntity)
+//
+//    @Insert(onConflict = OnConflictStrategy.REPLACE)
+//    suspend fun insertFolders(folders: List<FolderEntity>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFolders(folders: List<FolderEntity>)
 
-
-    @Query("SELECT * FROM folders WHERE folderId = :folderId")
-    suspend fun getFolderById(folderId: Long) : FolderEntity?
-
-    @Query("SELECT * FROM folders WHERE folderId = :folderId")
-    suspend fun getDetailedFolderById(folderId: Long): FolderWithPosts
+//    @Query("SELECT * FROM folders WHERE folderId = :folderId")
+//    suspend fun getFolderById(folderId: Long) : FolderEntity?
+//
+//    @Query("SELECT * FROM folders WHERE folderId = :folderId")
+//    suspend fun getDetailedFolderById(folderId: Long): FolderWithPosts
 
 
     @Transaction
@@ -68,21 +68,21 @@ interface UserDao {
     suspend fun getUserByIdWithFolders(userId: Long): UserWithFolders?
 
 
-    @Transaction
-    suspend fun deleteFolderWithConnections(folderId: Long) {
-        // Delete connections (cross-references) in FolderWithPostsCrossRef
-        deleteFolderConnections(folderId)
+//    @Transaction
+//    suspend fun deleteFolderWithConnections(folderId: Long) {
+//        // Delete connections (cross-references) in FolderWithPostsCrossRef
+//        deleteFolderConnections(folderId)
+//
+//        // Delete the folder itself from the folders table
+//        deleteFolderById(folderId)
+//    }
 
-        // Delete the folder itself from the folders table
-        deleteFolderById(folderId)
-    }
 
-
-    @Query("DELETE FROM folders WHERE folderId = :folderId")
-    suspend fun deleteFolderById(folderId: Long)
-
-    @Query("DELETE FROM FolderWithPostsCrossRef WHERE folderId = :folderId")
-    suspend fun deleteFolderConnections(folderId: Long)
+//    @Query("DELETE FROM folders WHERE folderId = :folderId")
+//    suspend fun deleteFolderById(folderId: Long)
+//
+//    @Query("DELETE FROM FolderWithPostsCrossRef WHERE folderId = :folderId")
+//    suspend fun deleteFolderConnections(folderId: Long)
 
 
 }
