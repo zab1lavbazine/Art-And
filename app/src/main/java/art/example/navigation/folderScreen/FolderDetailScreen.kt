@@ -132,7 +132,8 @@ fun FolderDetailScreen(
                         ) {
                             Text(
                                 text = folder.title,
-                                style = MaterialTheme.typography.titleLarge
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -143,7 +144,11 @@ fun FolderDetailScreen(
                     }
 
                     // Display posts related to the folder
-                    Text(text = "Posts:", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Posts:",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.LightGray
+                    )
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2), // Adjust for desired columns
                         modifier = Modifier.fillMaxSize(),

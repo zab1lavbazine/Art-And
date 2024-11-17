@@ -83,6 +83,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
             MyTopAppBar(
                 title = "Posts",
                 showBackButton = false,
+                showSearchButton = true,
                 onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
                 onMoreClicked = { /* Handle more options */ }
             )

@@ -2,6 +2,7 @@ package art.example.navigation.profileScreen
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,29 +27,38 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import art.example.ViewModel.FolderViewModel
 import art.example.ViewModel.PostViewModel
+import art.example.ViewModel.TagViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
+import art.example.api.data.Tag
 import art.example.api.data.User
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.postScreen.PostCard
 import art.example.navigation.postScreen.TagBox
+import art.example.navigation.postScreen.TagSelectionMenu
+import art.example.navigation.supportElements.MyModalBottomSheet
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -59,6 +70,7 @@ fun MyProfile(
     val userViewModel: UserViewModel = koinViewModel()
     val folderViewModel: FolderViewModel = koinViewModel()
     val postViewModel: PostViewModel = koinViewModel()
+    val tagViewModel: TagViewModel = koinViewModel()
 
 
     val currentUser by userViewModel.currentUser.observeAsState()
@@ -68,9 +80,24 @@ fun MyProfile(
 //
     val userFolders by folderViewModel.folders.observeAsState()
     val userPosts by postViewModel.selectedPosts.observeAsState(emptyList())
+    val tagList by tagViewModel.tags.observeAsState(emptyList())
 
     // State to manage the selected tab index
     val selectedTabIndex = remember { mutableIntStateOf(0) }
+
+    var showMoreClickDialog by remember { mutableStateOf(false) }
+    var showUserEditDialog by remember { mutableStateOf(false) }
+
+    val menuItems = mutableListOf(
+        MenuItem(
+            label = "Edit account info",
+            onClick = { showUserEditDialog = true }
+        ),
+        MenuItem(
+            label = "Log out",
+            onClick = { userViewModel.logout { navController.navigate(Screen.HelloScreen.route){ popUpTo(0)} } }
+        )
+    )
 
 
     // for getting current user from database
@@ -78,7 +105,9 @@ fun MyProfile(
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
         postViewModel.getCurrentUserPosts()
+        tagViewModel.loadTags()
     }
+
 
     LaunchedEffect(selectedTabIndex.intValue) {
         if (selectedTabIndex.intValue == 1){
@@ -90,9 +119,8 @@ fun MyProfile(
         topBar = {
             MyTopAppBar(
                 title = "My Profile",
-                showBackButton = false,
-                onSearchClicked = { /* Handle search */ },
-                onMoreClicked = { /* Handle more options */ }
+                showMoreClickedButton = true,
+                onMoreClicked = { showMoreClickDialog = true }
             )
         },
         bottomBar = {
@@ -150,6 +178,89 @@ fun MyProfile(
             }
         }
     }
+
+    // open menu on More clicked button
+    MyModalBottomSheet(
+        showDialog = showMoreClickDialog,
+        onDismissRequest = {
+            showMoreClickDialog = false
+        },
+        menuItems = menuItems
+    )
+
+    if (showUserEditDialog){
+        EditUserInfoDialog(
+            user = currentUser,
+            tagList = tagList,
+            onDismiss = { showUserEditDialog = false},
+            onConfirm = { updatedUser ->
+                userViewModel.updateUserInfo(updatedUser)
+                showUserEditDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun EditUserInfoDialog(
+    user: User?,
+    tagList: List<Tag>,
+    onDismiss: () -> Unit,
+    onConfirm: (User) -> Unit
+){
+    var username by remember { mutableStateOf(user?.username ?: "") }
+    var email by remember { mutableStateOf(user?.email ?: "") }
+    val selectedTagIds = remember { mutableStateOf(user?.preferredTags?.map { it.id }?.toSet() ?: emptySet()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Post") },
+        text = {
+            Column {
+                TextField(
+                    value = email                                                                                                         ,
+                    onValueChange = { email = it },
+                    label = { Text("Email") }
+                )
+                TextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Username") }
+                )
+
+                TagSelectionMenu(
+                    tags = tagList,
+                    selectedTags = selectedTagIds.value,
+                    onTagSelected = { selectedTagIds.value = it }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    user?.copy(
+                        email = email,
+                        username = username,
+                        preferredTags = selectedTagIds.value.map { id ->
+                            tagList.find { it.id == id } ?: Tag(id, "Unknown")
+                        }.toMutableList()
+                    )?.let {
+                        onConfirm(
+                            it
+                        )
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+
 }
 
 
@@ -217,14 +328,15 @@ fun UserPostsList(
                 contentPadding = PaddingValues(8.dp)
             ) {
                 items(usersPosts) { post ->
-                    PostCard(
-                        post = post,
-                        onClick = {
-                            // Navigate to post details when the post is clicked
-                            navController.navigate(Screen.PostDetail.createRoute(post.id))
-                        },
-                        menuItems = menuItems
-                    )
+                        PostCard(
+                            post = post,
+                            onClick = {
+                                // Navigate to post details when the post is clicked
+                                navController.navigate(Screen.PostDetail.createRoute(post.id))
+                            },
+                            menuItems = menuItems
+                        )
+
                 }
             }
         }

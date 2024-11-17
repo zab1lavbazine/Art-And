@@ -137,6 +137,7 @@ fun PostDetailScreen(
                 title = "Post details",
                 showBackButton = true,
                 onSearchClicked = { /* Handle search */ },
+                showMoreClickedButton = true,
                 onMoreClicked = {
                     showBottomSheet = true
                 },
@@ -291,7 +292,6 @@ fun PostCardItem(
                 text = post.description,
                 fontSize = 16.sp,
                 color = Color.LightGray,
-                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(4.dp))

@@ -41,17 +41,23 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
 
+    val startDestination = determineStartDestination()
+
     // Login success callback
     val onLoginSuccess: (String) -> Unit = {
-        navController.navigate(Screen.PostsScreen.route)
+        navController.navigate(Screen.PostsScreen.route) {
+           popUpTo(Screen.Login.route) { inclusive = true}
+        }
     }
     // register success callback to the login page
     val onRegisterSuccess: () -> Unit = {
-        navController.navigate(Screen.Login.route)
+        navController.navigate(Screen.Login.route) {
+            popUpTo(Screen.HelloScreen.route) { inclusive = true }
+        }
     }
 
 
-    NavHost(navController, startDestination = Screen.HelloScreen.route) {
+    NavHost(navController, startDestination = startDestination) {
         composable(Screen.RegisterScreen.route){
             RegisterScreen(
                 navController = navController,
@@ -80,16 +86,6 @@ fun MyApp() {
                 PostDetailScreen(postId, navController = navController)
             }
         }
-
-//        composable(
-//            Screen.MyProfile.route,
-//            arguments = listOf(navArgument("userId") { type = NavType.LongType })
-//        ) { navBackStackEntry ->
-//            val userId = navBackStackEntry.arguments?.getLong("userId")
-//            if (userId != null) {
-//                UserDetailedScreen(userId, navController = navController)
-//            }
-//        }
 
 
         composable(

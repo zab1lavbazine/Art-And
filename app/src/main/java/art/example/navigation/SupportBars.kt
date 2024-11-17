@@ -98,8 +98,10 @@ fun BottomNavigationBar(navController: NavHostController) {
 fun MyTopAppBar(
     title: String,
     showBackButton: Boolean = false,
-    onSearchClicked: () -> Unit = {},
-    onMoreClicked: () -> Unit = {},
+    showSearchButton: Boolean = false,
+    showMoreClickedButton: Boolean = false,
+    onSearchClicked: (() -> Unit)? = null,
+    onMoreClicked: (() -> Unit)? = null,
     onBackClicked: (() -> Unit)? = null,
     menuItems: List<MenuItem> = emptyList()
 ) {
@@ -122,11 +124,15 @@ fun MyTopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onSearchClicked) {
-                Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
+            if (showSearchButton && onSearchClicked != null){
+                IconButton(onClick = onSearchClicked) {
+                    Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
+                }
             }
-            IconButton(onClick = onMoreClicked) {
-                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
+            if (showMoreClickedButton && onMoreClicked != null) {
+                IconButton(onClick = onMoreClicked) {
+                    Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
+                }
             }
         }
     )

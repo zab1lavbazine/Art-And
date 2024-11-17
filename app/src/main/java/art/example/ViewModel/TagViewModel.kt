@@ -1,6 +1,7 @@
 package art.example.ViewModel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -29,6 +30,7 @@ class TagViewModel(
         viewModelScope.launch {
             try {
                 val fetchedTags = tagRepository.loadTags() // Fetch tags from your repository
+                Log.d("FLOW", "Loading tags from api: $fetchedTags")
                 _tags.value = fetchedTags
             } catch (e: Exception) {
                 // Handle error

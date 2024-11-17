@@ -1,17 +1,14 @@
 package art.example.api.service
 
-import art.example.api.data.Post
 import art.example.api.data.User
 import art.example.api.reponses.LoginResponse
 import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
-import art.example.screen.Screen
-import kotlinx.serialization.Serializable
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.PUT
 
 interface UserApiService {
 
@@ -24,5 +21,8 @@ interface UserApiService {
 
     @POST("/api/auth/signup")
     suspend fun register(@Body credentials: RegisterUserDTO)
+
+    @PUT("/api/users")
+    suspend fun updateUserInfo(@Body updatedUser: User): Map<String, String>
 
 }

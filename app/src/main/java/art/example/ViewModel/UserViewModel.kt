@@ -34,59 +34,25 @@ class UserViewModel(
 
 
 
-
-
-//
-//    fun getUserFolders() {
-//        viewModelScope.launch {
-//            _isLoadingPosts.value = true
-//            try {
-//                val fetchedFolders = userRepository.getCurrentUserFolders()
-//                _userFolders.value = fetchedFolders
-//            } catch (e: Exception) {
-//                // Handle error
-//            } finally {
-//                _isLoadingPosts.value = false
-//            }
-//        }
-//    }
-//
-//    fun getUserFoldersById(userId: Long){
-//        viewModelScope.launch {
-//            _isLoading.value = true
-//            try {
-//                val userFolders = userRepository.getUserFoldersById(userId)
-//               _userFolders.value = userFolders
-//                Log.d("FLOW", "USER folders $userFolders")
-//            } catch(e : Exception){
-//                Log.d("FLOW", "ERROR getting folders for userId: $userId")
-//
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-
-
-
     fun getSavedUser(): UserCredentials? {
         return userRepository.getSavedUserCredentials()
     }
 
 
-//    fun getDetailedFolder(folderId: Long){
-//        viewModelScope.launch {
-//            _isLoadingFolder.value = true
-//            try {
-//                val fetchedFolder = userRepository.getFolderById(folderId)
-//                _selectedFolder.value = fetchedFolder
-//            } catch (e: Exception){
-//                Log.d("FLOW", "ERROR with fetching folder with id: $folderId")
-//            } finally {
-//                _isLoadingFolder.value = false
-//            }
-//        }
-//    }
+    fun updateUserInfo(user: User){
+        viewModelScope.launch {
+            _errorMessage.value = null
+            try {
+                val newUser = userRepository.updateUserInfo(user)
+                _currentUser.value = newUser
+                Log.d("FLOW", "Updated user: $newUser")
+            } catch (e: Exception){
+                Log.d("FLOW", "user update failed user: $user, error: ${e.message}")
+                _errorMessage.value = e.message
+            }
+        }
+    }
+
 
 
     fun getCurrentUser() {
@@ -98,7 +64,7 @@ class UserViewModel(
                 val userId = sharedPreferences.getLong("current_user_id", -1)
                 Log.d("FLOW", "Current user ID: $userId")
                 if (userId != -1L) {
-                    val user = userRepository.getUserAccount()
+                    val user = userRepository.getUserAccount(userId)
                     _currentUser.value = user
                 } else {
                     _currentUser.value = null // Handle the case where user ID is invalid
@@ -111,79 +77,6 @@ class UserViewModel(
         }
     }
 
-
-//    fun savePostInFolder(post: Post, folder: Folder){
-//        viewModelScope.launch {
-//            try {
-//                userRepository.updateFolderWithPost(folder, post)
-//            }catch (e : Exception){
-//                Log.e("FLOW", "ERROR with adding post: $post to folder: $folder")
-//            }
-//        }
-//    }
-
-
-//    fun deletePostFromFolder(post: Post, folder: Folder) {
-//        viewModelScope.launch {
-//            try {
-//                Log.d("FLOW", "Deleting post: $post from the folder: $folder")
-//                val newFolder = userRepository.deletePostFromFolder(folder, post)
-//                _selectedFolder.value = newFolder
-//                Log.d("FLOW", "New selected folder $selectedFolder")
-//            } catch (e: Exception) {
-//                Log.e("FLOW", "Error deleting post: $post from folder: $folder")
-//                _errorMessage.value = "Error deleting post. Please try again."
-//            }
-//        }
-//    }
-//
-//    fun deleteFolderById(folderId : Long){
-//        viewModelScope.launch {
-//            try {
-//                Log.d("FLOW", "DELETING folder with id: $folderId")
-//                userRepository.deleteFolderById(folderId)
-//            } catch (e: Exception){
-//                Log.d("FLOW", "Error while deleting folder by id: $folderId")
-//            }
-//        }
-//    }
-
-
-//    fun createFolder(title: String, description: String) {
-//        viewModelScope.launch {
-//            _isLoading.value = true
-//            _errorMessage.value = null // Clear previous error message
-//            try {
-//                val newFolder = userRepository.createFolder(title, description)
-//                if (newFolder != null) {
-//                    // Update the list of user folders
-//                    val updatedFolders = _userFolders.value?.toMutableList() ?: mutableListOf()
-//                    updatedFolders.add(newFolder)
-//                    _userFolders.value = updatedFolders
-//                } else {
-//                    _errorMessage.value = "Failed to create folder. Please try again."
-//                }
-//            } catch (e: Exception) {
-//                _errorMessage.value = "Failed to create folder. Please try again."
-//            } finally {
-//                _isLoading.value = false
-//            }
-//        }
-//    }
-
-//    fun updateFolderInfo(id: Long, folderTitle: String, folderDescription: String) {
-//        viewModelScope.launch {
-//            _errorMessage.value = null
-//            try {
-//                val newFolder = userRepository.updateFolderById(id, folderTitle, folderDescription)
-//                Log.d("FLOW", "NEW folder from the api folder: $newFolder")
-//                _selectedFolder.value = newFolder
-//            } catch( e: Exception){
-//                Log.d("FLOW", "error with updating folder by id: $id")
-//                _errorMessage.value = "Failed to update folder, try again"
-//            }
-//        }
-//    }
 
 
     fun register(email : String, username: String, password: String, onRegisterSuccess: () -> Unit ){
@@ -247,14 +140,16 @@ class UserViewModel(
         return sharedPreferences.getString("auth_token", null) // Retrieve the token
     }
 
-    fun logout() {
-        _currentUser.value = null // Clear current user from LiveData
-        with(sharedPreferences.edit()) {
-            remove("current_user_id")
-            remove("current_user_username")
-            remove("current_user_email")
-            remove("auth_token")
-            apply() // Save changes
+    fun logout(onLogoutComplete: ()-> Unit) {
+        viewModelScope.launch {
+            try {
+                userRepository.logout()
+                // deleting current user from the memory
+                _currentUser.value = null
+                onLogoutComplete()
+            } catch (e: Exception){
+                Log.d("FLOW", "Logout from the application")
+            }
         }
     }
 

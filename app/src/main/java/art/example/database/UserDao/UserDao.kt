@@ -5,8 +5,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import art.example.api.data.User
+import art.example.api.data.toTagEntity
 import art.example.database.entities.FolderEntity
 import art.example.database.entities.FolderWithPosts
+import art.example.database.entities.TagEntity
 import art.example.database.entities.UserEntity
 import art.example.database.entities.UserWithFolders
 import art.example.database.entities.UserWithPosts
@@ -21,6 +24,26 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
+
+    @Transaction
+    suspend fun insertUserWithTags(user: User){
+        // deleting old tags from the user
+        deleteTagsForUser(user.id)
+        // inserting user to database
+        insertUser(user.toUserEntity())
+        // insert tags to database
+        user.preferredTags.forEach { tag ->
+            insertTag(tag.toTagEntity())
+            insertUserWithTag(UserWithTagsCrossRef(user.id, tag.id))
+        }
+    }
+
+    @Query("DELETE FROM UserWithTagsCrossRef where userId = :userId")
+    suspend fun deleteTagsForUser(userId: Long)
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTag(tagEntity: TagEntity)
 
 
     // user and tag
@@ -40,19 +63,6 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserById(userId: Long): UserEntity?
 
-//    @Insert(onConflict = OnConflictStrategy.REPLACE)
-//    suspend fun insertFolder(folder: FolderEntity)
-//
-//    @Insert(onConflict = OnConflictStrategy.REPLACE)
-//    suspend fun insertFolders(folders: List<FolderEntity>)
-
-
-//    @Query("SELECT * FROM folders WHERE folderId = :folderId")
-//    suspend fun getFolderById(folderId: Long) : FolderEntity?
-//
-//    @Query("SELECT * FROM folders WHERE folderId = :folderId")
-//    suspend fun getDetailedFolderById(folderId: Long): FolderWithPosts
-
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -66,23 +76,5 @@ interface UserDao {
     @Transaction
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserByIdWithFolders(userId: Long): UserWithFolders?
-
-
-//    @Transaction
-//    suspend fun deleteFolderWithConnections(folderId: Long) {
-//        // Delete connections (cross-references) in FolderWithPostsCrossRef
-//        deleteFolderConnections(folderId)
-//
-//        // Delete the folder itself from the folders table
-//        deleteFolderById(folderId)
-//    }
-
-
-//    @Query("DELETE FROM folders WHERE folderId = :folderId")
-//    suspend fun deleteFolderById(folderId: Long)
-//
-//    @Query("DELETE FROM FolderWithPostsCrossRef WHERE folderId = :folderId")
-//    suspend fun deleteFolderConnections(folderId: Long)
-
 
 }
