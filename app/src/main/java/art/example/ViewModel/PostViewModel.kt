@@ -7,20 +7,18 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Post
-import art.example.api.data.Tag
+import art.example.api.reponses.SearchPagingSource
 import art.example.api.repository.impl.PostRepository
 import art.example.api.responses.PostPagingSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class PostViewModel(
     private val postRepository: PostRepository,
@@ -65,11 +63,22 @@ class PostViewModel(
         }
     }
 
+    fun searchPosts(query: String): Flow<PagingData<Post>> {
+        return getSearchStream(query)
+    }
+
     private fun getPostsStream(): Flow<PagingData<Post>> {
         return Pager(
             config = PagingConfig(pageSize = 5), // Set the desired page size
             pagingSourceFactory = { PostPagingSource(postRepository, pageSize = 5) }
         ).flow.cachedIn(viewModelScope) // caching in the view model scope that data from the server
+    }
+
+    private fun getSearchStream(query: String): Flow<PagingData<Post>> {
+        return Pager(
+            config = PagingConfig(pageSize = 5),
+            pagingSourceFactory = { SearchPagingSource(postRepository = postRepository, query = query)}
+        ).flow.cachedIn(viewModelScope)
     }
 
     fun deletePostById(postId: Long){

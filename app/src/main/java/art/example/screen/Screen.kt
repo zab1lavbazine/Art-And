@@ -14,13 +14,9 @@ sealed class Screen(val route: String) {
 
     object MyProfile: Screen("profile")
 
-//    object MyProfile : Screen("profile/{userId}") {
-//        fun createRoute(userId: Long) = "profile/$userId"
-//    }
-
+    object SearchScreen: Screen("search")
 
     object RegisterScreen : Screen("register")
     object CreateFolder : Screen("createFolder")
-    object SearchScreen: Screen("screen")
     object HelloScreen: Screen("helloScreen")
 }

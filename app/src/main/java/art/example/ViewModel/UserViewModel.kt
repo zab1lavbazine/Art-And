@@ -13,6 +13,7 @@ import art.example.api.data.User
 import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.security.MessageDigest
 
 class UserViewModel(
@@ -88,7 +89,7 @@ class UserViewModel(
                 Log.d("FLOW", "REGISTRATION successfully")
                 onRegisterSuccess()
             } catch (e : Exception){
-                Log.e("FLOW", "Error with registration")
+                Log.e("FLOW", "Error with registration: $e")
                 _errorMessage.value = "Registration failed, please try again"
             } finally {
                 _isLoading.value = false
@@ -101,14 +102,17 @@ class UserViewModel(
         viewModelScope.launch {
             _errorMessage.value = null // Clear previous error message
             try {
-                val loggedInUser = userRepository.login(username, password)
-                if (loggedInUser != null) {
-                    _currentUser.value = loggedInUser // Update currentUser LiveData
-                    setAuthToken(userRepository.getAuthToken() ?: "")
-                    saveUserCredentials(loggedInUser) // Save user credentials
-                    onLoginSuccess(userRepository.getAuthToken() ?: "")
-                } else {
-                    _errorMessage.value = "Login failed. Please try again."
+                // adding timeout -> not have infinite loading
+                withTimeout(5000L) {
+                    val loggedInUser = userRepository.login(username, password)
+                    if (loggedInUser != null) {
+                        _currentUser.value = loggedInUser // Update currentUser LiveData
+                        setAuthToken(userRepository.getAuthToken() ?: "")
+                        saveUserCredentials(loggedInUser) // Save user credentials
+                        onLoginSuccess(userRepository.getAuthToken() ?: "")
+                    } else {
+                        _errorMessage.value = "Login failed. Please try again."
+                    }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Login failed. Please try again."

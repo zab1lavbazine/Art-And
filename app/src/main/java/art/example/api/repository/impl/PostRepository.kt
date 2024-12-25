@@ -39,6 +39,16 @@ class PostRepository(
         }
     }
 
+    suspend fun searchPosts(query : String, pageSize: Int, pageNumber: Int) : ResponseItem<Post>{
+        return try {
+            val response = postApiService.searchPosts(query, pageNumber, pageSize)
+            response
+        } catch (e: Exception){
+            Log.d("FLOW", "Error searching for posts")
+            ResponseItem(emptyList())
+        }
+    }
+
     suspend fun deletePostById(postId: Long){
         postApiService.deletePostById(postId)
     }

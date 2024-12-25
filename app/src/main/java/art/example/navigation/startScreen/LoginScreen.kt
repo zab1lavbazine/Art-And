@@ -31,7 +31,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    onLoginSuccess: (String) -> Unit
 ) {
     val userViewModel: UserViewModel = koinViewModel()
 
@@ -42,6 +41,19 @@ fun LoginScreen(
     val isLoading by userViewModel.isLoading.observeAsState(initial = false)
     // Observe error message from ViewModel
     val errorMessage by userViewModel.errorMessage.observeAsState()
+
+
+
+    // automatic login to the application
+    LaunchedEffect(savedUser) {
+        if (savedUser != null) {
+            userViewModel.login(savedUser.username, savedUser.password) { token ->
+                navController.navigate(Screen.PostsScreen.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+            }
+        }
+    }
 
 
         Column(
@@ -84,7 +96,6 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 userViewModel.login(username, password) { token ->
-                    onLoginSuccess(token) // Call the success callback
                     navController.navigate(Screen.PostsScreen.route) // Navigate to PostsScreen on successful login
                 }
             }) {

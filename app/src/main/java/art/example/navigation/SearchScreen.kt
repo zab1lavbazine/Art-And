@@ -1,144 +1,118 @@
 package art.example.navigation
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import art.example.ViewModel.PostViewModel
+import art.example.navigation.postScreen.PostGrid
+import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
-fun SearchScreen(navController: NavController) {
+fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+    val viewModel: PostViewModel = koinViewModel()
     var searchText by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf(listOf<String>()) } // To hold search results
-    val postViewModel: PostViewModel = koinViewModel()
+    var triggerSearch by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Search Posts",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    // Collect search results based on the query
+    val searchFlow = remember(searchText, triggerSearch) {
+        viewModel.searchPosts(searchText)
+    }
+    val searchResults = searchFlow.collectAsLazyPagingItems()
 
-        // Using the SearchBar component
-        SearchBar(
-            inputField = {
+    // Remember LazyGridState
+    val gridState = rememberLazyGridState()
+
+    Scaffold(
+        topBar = {
+            MyTopAppBar(
+                title = "Search Posts",
+                showBackButton = true,
+                onBackClicked = { navController.popBackStack() },
+                showSearchButton = false,
+                onMoreClicked = { /* Handle more options */ }
+            )
+        },
+        bottomBar = {
+            BottomNavigationBar(navController = navController)
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Search input
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 BasicTextField(
                     value = searchText,
-                    onValueChange = { text ->
-                        searchText = text
-                        searchResults = performSearch(searchText) // Example search function
-                    },
+                    onValueChange = { searchText = it },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { triggerSearch = !triggerSearch }),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .background(Color.White, RoundedCornerShape(10.dp))
-                        .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp)),
+                        .weight(1f)
+                        .padding(8.dp)
+                        .background(Color.White, MaterialTheme.shapes.small)
+                        .border(1.dp, Color.LightGray)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     decorationBox = { innerTextField ->
                         if (searchText.isEmpty()) {
-                            Text("Type to search...", color = Color.Gray)
+                            Text("Search posts...", color = Color.Gray)
                         }
-                        innerTextField() // Draw the inner text field
+                        innerTextField()
                     }
                 )
-            },
-            expanded = true, // Keep it expanded for simplicity; you can manage this state as needed
-            onExpandedChange = {},
-            content = {
-                // Displaying Search Results
-                if (searchResults.isNotEmpty()) {
-                    Column {
-                        Text(
-                            text = "Results:",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        for (result in searchResults) {
-                            Text(
-                                text = result,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            // Search results
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    searchResults.loadState.refresh is LoadState.Loading -> {
+                        CircularProgressIndicator()
                     }
-                } else {
-                    if (searchText.isNotEmpty()) {
-                        Text(
-                            text = "No results found.",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(8.dp)
+                    searchResults.loadState.refresh is LoadState.Error -> {
+                        val error = (searchResults.loadState.refresh as LoadState.Error).error
+                        Text(text = "Error loading results: ${error.localizedMessage}")
+                    }
+                    searchResults.itemSnapshotList.isEmpty() -> {
+                        Text(text = "No results found", color = Color.Gray)
+                    }
+                    else -> {
+                        PostGrid(
+                            posts = searchResults,
+                            onClick = { postId ->
+                                navController.navigate(Screen.PostDetail.createRoute(postId))
+                            },
+                            gridState = gridState // Pass the LazyGridState here
                         )
                     }
                 }
             }
-        )
-    }
-}
-
-// Simulated search function
-fun performSearch(query: String): List<String> {
-    // Replace this with actual search logic. For now, return dummy data.
-    val allPosts = listOf("Post 1", "Post 2", "Post 3") // Replace with actual data
-    return if (query.isEmpty()) {
-        emptyList()
-    } else {
-        allPosts.filter { it.contains(query, ignoreCase = true) } // Filter posts based on query
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchBar(
-    inputField: @Composable () -> Unit,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(10.dp), // Rounded corners
-    colors: SearchBarColors = SearchBarDefaults.colors(),
-    tonalElevation: Dp = 4.dp,
-    shadowElevation: Dp = 4.dp,
-    windowInsets: WindowInsets = SearchBarDefaults.windowInsets,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(tonalElevation, shape) // Add shadow for depth
-            .padding(8.dp)
-            .background(colors.containerColor, shape)
-            .border(BorderStroke(1.dp, Color.LightGray), shape) // Use light gray border
-            .padding(windowInsets.asPaddingValues()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Input Field
-        Box(modifier = Modifier.fillMaxWidth()) {
-            inputField()
-        }
-
-        // Expandable content that shows when the search bar is expanded
-        if (expanded) {
-            Column {
-                content()
-            }
         }
     }
 }
+

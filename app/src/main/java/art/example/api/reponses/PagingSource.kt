@@ -1,6 +1,5 @@
 package art.example.api.responses
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import art.example.api.data.Post

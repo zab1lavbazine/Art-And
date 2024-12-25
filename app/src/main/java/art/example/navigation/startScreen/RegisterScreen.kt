@@ -102,6 +102,16 @@ fun RegisterScreen(
                     ) {
                         Text(text = if (isLoading) "Registering..." else "Register")
                     }
+
+                    errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
         }
