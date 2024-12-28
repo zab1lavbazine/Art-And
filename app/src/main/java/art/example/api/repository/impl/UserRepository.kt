@@ -60,6 +60,11 @@ class UserRepository(
         }
     }
 
+    suspend fun getSelectedUserById(userId: Long) : User? {
+        val selectedUser = userApiService.getSelectedUserById(userId)
+        return selectedUser
+    }
+
     // Inside UserRepository
     fun getAuthToken(): String? {
         return sharedPreferences.getString("auth_token", null)

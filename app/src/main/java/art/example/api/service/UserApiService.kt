@@ -9,6 +9,7 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface UserApiService {
 
@@ -24,5 +25,9 @@ interface UserApiService {
 
     @PUT("/api/users")
     suspend fun updateUserInfo(@Body updatedUser: User): Map<String, String>
+
+
+    @GET("/api/users/{userId}")
+    suspend fun getSelectedUserById(@Path("userId") userId: Long): User?
 
 }

@@ -58,6 +58,7 @@ import art.example.ViewModel.TagViewModel
 import art.example.api.data.Tag
 import art.example.api.data.User
 import art.example.navigation.supportElements.ResolvePostImage
+import art.example.screen.Screen
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -310,7 +311,7 @@ fun PostCardItem(
                         .padding(start = 8.dp, end = 4.dp)
                 )
 
-                UsernameTag(patron = post.patron, onClick = { Unit })
+                UsernameTag(patron = post.patron, onClick = { navController.navigate(Screen.UserDetail.createRoute(userId = post.patron.id)) })
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {

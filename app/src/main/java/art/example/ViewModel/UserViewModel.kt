@@ -33,6 +33,26 @@ class UserViewModel(
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
 
+    private val _selectedUser = MutableLiveData<User?>()
+    val selectedUser: LiveData<User?> get() = _selectedUser
+
+
+
+    fun getSelectedUserById (userId: Long){
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val selectedUser = userRepository.getSelectedUserById(userId)
+                _selectedUser.value = selectedUser
+                Log.d("FLOW", "Selected user $selectedUser")
+            } catch (e : Exception){
+                Log.d("FLOW", "Error getting selected user by id: $userId")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
 
     fun getSavedUser(): UserCredentials? {

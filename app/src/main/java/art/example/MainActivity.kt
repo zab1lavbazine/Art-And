@@ -27,6 +27,7 @@ import art.example.navigation.postScreen.PostListScreen
 import art.example.navigation.startScreen.RegisterScreen
 import art.example.navigation.SearchScreen
 import art.example.navigation.profileScreen.MyProfile
+import art.example.navigation.profileScreen.UserDetailScreen
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -111,6 +112,16 @@ fun MyApp() {
                 val postId = backStackEntry.arguments?.getLong("postId")
                 if (postId != null) {
                     PostDetailScreen(postId, navController = navController)
+                }
+            }
+
+            composable(
+                Screen.UserDetail.route,
+                arguments = listOf(navArgument("userId") { type = NavType.LongType})
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getLong("userId")
+                if (userId != null){
+                    UserDetailScreen(userId, navController = navController)
                 }
             }
 

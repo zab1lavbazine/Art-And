@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -56,6 +55,22 @@ class PostViewModel(
                 _selectedPosts.value = posts
             } catch (e: Exception){
                 Log.d("FLOW", "Error fetching posts for current user")
+                _selectedPosts.value = emptyList()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun getUserPostsById(userId: Long){
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val currentUserPosts = postRepository.getPostsByUserId(userId)
+                _selectedPosts.value = currentUserPosts
+            } catch (e : Exception){
+                Log.d("FLOW", "Failed to get")
                 _selectedPosts.value = emptyList()
             } finally {
                 _isLoading.value = false
