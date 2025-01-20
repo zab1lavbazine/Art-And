@@ -3,6 +3,7 @@ package art.example.ViewModel
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import art.example.api.data.Comment
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Post
 import art.example.api.reponses.SearchPagingSource
@@ -29,6 +31,9 @@ class PostViewModel(
     // for the selected post, it will update and then be present for the UI
     private val _selectedPost = MutableLiveData<Post?>()
     val selectedPost: MutableLiveData<Post?> get() = _selectedPost
+
+    private val _selectedPostComments = MutableLiveData<MutableList<Comment>>()
+    val selectedPostComments: MutableLiveData<MutableList<Comment>> get() = _selectedPostComments
 
 //    private val _posts : Flow<PagingData<Post>> = getPostsStream()
     val posts : Flow<PagingData<Post>> = getPostsStream()
@@ -52,6 +57,7 @@ class PostViewModel(
             try {
                 val currentUserId = sharedPreferences.getLong("current_user_id", -1)
                 val posts = postRepository.getPostsByUserId(currentUserId)
+                Log.d("FLOW", "FETCHED posts for user: $currentUserId, posts: $posts")
                 _selectedPosts.value = posts
             } catch (e: Exception){
                 Log.d("FLOW", "Error fetching posts for current user")
@@ -71,6 +77,7 @@ class PostViewModel(
                 _selectedPosts.value = currentUserPosts
             } catch (e : Exception){
                 Log.d("FLOW", "Failed to get")
+                Log.d("FLOW", "Error to get posts for userId: $userId, cause: ${e.message}")
                 _selectedPosts.value = emptyList()
             } finally {
                 _isLoading.value = false
@@ -131,6 +138,52 @@ class PostViewModel(
                 _selectedPost.value = null
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun getPostCommentsByPostId(postId: Long ){
+        viewModelScope.launch {
+            try {
+                val comments = postRepository.getPostCommentsByPostId(postId)
+                Log.d("FLOW", "Comments for post: $postId, $comments")
+                _selectedPostComments.value = comments.toMutableList()
+            } catch (e : Exception){
+                Log.d("FLOW", "Error getting post comments, postId: $postId")
+            }
+        }
+    }
+
+    fun postNewCommentUnderPostWithId( postId: Long, comment: String){
+        viewModelScope.launch {
+            _errorMessage.value = null
+            try {
+                val newComment = postRepository.postNewCommentUnderPostWithId( postId, comment)
+                newComment?.let {
+                    val updatedComments =
+                        _selectedPostComments.value?.toMutableList() ?: mutableListOf()
+                    updatedComments.add(newComment)
+                    _selectedPostComments.value = updatedComments
+                }
+            } catch (e: Exception){
+                Log.d("FLOW", "Failed to post new comment: $comment for post with id: $postId")
+                Log.d("FLOW", "ERROR: ${e.message}")
+                _errorMessage.value = "Failed to post comment"
+            }
+        }
+    }
+
+    fun deleteCommentByIdFromPost(postId : Long, commentId: Long){
+        viewModelScope.launch {
+            _errorMessage.value = null
+            try {
+                postRepository.deleteCommentByIdFromPost(postId, commentId)
+                val updatedComments = _selectedPostComments.value?.filter { comment -> comment.id != commentId} ?: emptyList()
+                _selectedPostComments.value = updatedComments.toMutableList()
+                Log.d("FLOW", "Comment $commentId deleted from post: $postId")
+            } catch (e: Exception){
+                Log.d("FLOW", "Failed to delete comment: $commentId, from post: $postId")
+                _errorMessage.value = "Failed to delete comment from post"
             }
         }
     }

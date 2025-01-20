@@ -1,5 +1,7 @@
 package art.example.api.service
 
+import art.example.api.data.ResetPasswordRequest
+import art.example.api.data.SelectedUser
 import art.example.api.data.User
 import art.example.api.reponses.LoginResponse
 import art.example.api.reponses.RegisterUserDTO
@@ -10,6 +12,7 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface UserApiService {
 
@@ -28,6 +31,14 @@ interface UserApiService {
 
 
     @GET("/api/users/{userId}")
-    suspend fun getSelectedUserById(@Path("userId") userId: Long): User?
+    suspend fun getSelectedUserById(@Path("userId") userId: Long): SelectedUser?
+
+
+    @POST("/api/auth/reset-password-request")
+    suspend fun resetPassword(@Query("email") email: String): String?
+
+    @PUT("/api/auth/reset-password")
+    @Headers("Content-Type: application/json")
+    suspend fun sendNewPassword(@Body request: ResetPasswordRequest)
 
 }

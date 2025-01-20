@@ -3,6 +3,8 @@ package art.example.api.repository.impl
 import android.content.Context
 import android.util.Log
 import androidx.room.Transaction
+import art.example.api.data.ResetPasswordRequest
+import art.example.api.data.SelectedUser
 import com.google.android.gms.auth.api.credentials.Credentials
 import com.google.android.gms.auth.api.credentials.CredentialsClient
 import art.example.api.data.User
@@ -60,7 +62,7 @@ class UserRepository(
         }
     }
 
-    suspend fun getSelectedUserById(userId: Long) : User? {
+    suspend fun getSelectedUserById(userId: Long) : SelectedUser? {
         val selectedUser = userApiService.getSelectedUserById(userId)
         return selectedUser
     }
@@ -90,6 +92,18 @@ class UserRepository(
         createUser(user)
         currentUser = user
         return user
+    }
+
+    suspend fun resetPassword(email: String): String? {
+        val response = userApiService.resetPassword(email)
+        return response
+    }
+
+    suspend fun sendNewPassword(request: ResetPasswordRequest) {
+        val newPassword = hashFunction(request.password)
+        val newHashConfirmPassword = hashFunction(request.confirmPassword)
+        val newRequest = request.copy(password = newPassword, confirmPassword = newHashConfirmPassword)
+        return userApiService.sendNewPassword(newRequest)
     }
 
 

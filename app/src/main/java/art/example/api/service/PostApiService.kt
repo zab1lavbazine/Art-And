@@ -1,7 +1,9 @@
 package art.example.api.service
 
+import art.example.api.data.Comment
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Post
+import com.google.android.gms.common.internal.safeparcel.SafeParcelable.Param
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonNames
 import okhttp3.MultipartBody
@@ -15,6 +17,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface PostApiService {
 
@@ -59,6 +62,24 @@ interface PostApiService {
                                @Part("tagsId") tagsId: RequestBody,
                                @Part file: MultipartBody.Part?
     ): Post?
+
+
+    @GET("/api/posts/{postId}/comments")
+    suspend fun getPostCommentsByPostId(
+        @Path("postId") postId: Long
+    ): List<Comment>
+
+    @POST("/api/posts/{postId}/comments")
+    suspend fun postNewCommentUnderPostWithId(
+        @Path("postId") postId: Long,
+        @Query("text") comment: String,
+    ): Comment?
+
+    @DELETE("/api/posts/{postId}/comments/{commentId}")
+    suspend fun deleteCommentByIdFromPost(
+        @Path("postId") postId: Long,
+        @Path("commentId") commentId : Long
+    )
 
 
 }

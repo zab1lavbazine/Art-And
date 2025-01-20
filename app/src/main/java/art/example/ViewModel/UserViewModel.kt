@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import art.example.api.data.Folder
 import art.example.api.data.Post
+import art.example.api.data.ResetPasswordRequest
+import art.example.api.data.SelectedUser
 import art.example.api.data.User
 import art.example.api.reponses.RegisterUserDTO
 import art.example.api.reponses.UserCredentials
@@ -30,11 +32,14 @@ class UserViewModel(
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> get() = _errorMessage
 
+    private val _apiResponse = MutableLiveData<String?>()
+    val apiResponse: LiveData<String?> get() = _apiResponse
+
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
 
-    private val _selectedUser = MutableLiveData<User?>()
-    val selectedUser: LiveData<User?> get() = _selectedUser
+    private val _selectedUser = MutableLiveData<SelectedUser?>()
+    val selectedUser: LiveData<SelectedUser?> get() = _selectedUser
 
 
 
@@ -44,10 +49,13 @@ class UserViewModel(
             _errorMessage.value = null
             try {
                 val selectedUser = userRepository.getSelectedUserById(userId)
-                _selectedUser.value = selectedUser
+                if (selectedUser != null){
+                    _selectedUser.value = selectedUser
+                }
                 Log.d("FLOW", "Selected user $selectedUser")
             } catch (e : Exception){
                 Log.d("FLOW", "Error getting selected user by id: $userId")
+                Log.d("FLOW", "Error $e")
             } finally {
                 _isLoading.value = false
             }
@@ -110,7 +118,7 @@ class UserViewModel(
                 onRegisterSuccess()
             } catch (e : Exception){
                 Log.e("FLOW", "Error with registration: $e")
-                _errorMessage.value = "Registration failed, please try again"
+                _errorMessage.value = e.message
             } finally {
                 _isLoading.value = false
             }
@@ -160,9 +168,6 @@ class UserViewModel(
         }
     }
 
-    fun getAuthToken(): String? {
-        return sharedPreferences.getString("auth_token", null) // Retrieve the token
-    }
 
     fun logout(onLogoutComplete: ()-> Unit) {
         viewModelScope.launch {
@@ -173,6 +178,44 @@ class UserViewModel(
                 onLogoutComplete()
             } catch (e: Exception){
                 Log.d("FLOW", "Logout from the application")
+            }
+        }
+    }
+
+
+    fun resetPassword(email: String){
+        viewModelScope.launch {
+            _errorMessage.value = null
+            _apiResponse.value = null
+            try {
+                val response = userRepository.resetPassword(email)
+                _apiResponse.value = response
+            } catch (e: Exception){
+                Log.d("FLOW", "Failed to send reset password request")
+                _errorMessage.value = "Failed to reset password"
+            }
+        }
+    }
+
+    fun sendNewPassword(
+        token: String,
+        password: String,
+        confirmedPassword: String
+    ){
+        viewModelScope.launch {
+            _errorMessage.value = null
+            _apiResponse.value = null
+            try {
+                val request = ResetPasswordRequest(
+                    token = token,
+                    password = password,
+                    confirmPassword = confirmedPassword
+                )
+                userRepository.sendNewPassword(request)
+            } catch (e : Exception){
+                Log.d("FLOW", "Failed to send new password with token")
+                Log.d("FLOW", "Error with sending: ${e.message}")
+                _errorMessage.value = "Failed to update password on api"
             }
         }
     }

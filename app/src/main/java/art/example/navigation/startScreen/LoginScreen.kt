@@ -1,6 +1,7 @@
 package art.example.navigation.startScreen
 
 import android.annotation.SuppressLint
+import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -24,6 +26,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import art.example.ViewModel.UserViewModel
+import art.example.screen.AuthScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -48,8 +52,8 @@ fun LoginScreen(
     LaunchedEffect(savedUser) {
         if (savedUser != null) {
             userViewModel.login(savedUser.username, savedUser.password) { token ->
-                navController.navigate(Screen.PostsScreen.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+                navController.navigate(PostScreens.PostsScreen.route) {
+                    popUpTo(AuthScreens.Login.route) { inclusive = true }
                 }
             }
         }
@@ -96,10 +100,25 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 userViewModel.login(username, password) { token ->
-                    navController.navigate(Screen.PostsScreen.route) // Navigate to PostsScreen on successful login
+                    navController.navigate(PostScreens.PostsScreen.route) // Navigate to PostsScreen on successful login
                 }
             }) {
                 Text(text = if (isLoading) "Logging in..." else "Login")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                navController.navigate(AuthScreens.ResetPassword.route)
+            },
+                modifier = Modifier
+                    .height(48.dp)
+                    .padding(horizontal = 32.dp)
+                    .fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Gray,
+                    contentColor = Color.White
+                )
+            ){
+                Text("Reset password")
             }
         }
 }

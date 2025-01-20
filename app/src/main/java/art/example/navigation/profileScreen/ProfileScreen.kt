@@ -7,17 +7,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -53,12 +56,16 @@ import art.example.api.data.Post
 import art.example.api.data.Tag
 import art.example.api.data.User
 import art.example.navigation.BottomNavigationBar
+import art.example.navigation.GeneralMenuItem
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.postScreen.PostCard
 import art.example.navigation.postScreen.TagBox
 import art.example.navigation.postScreen.TagSelectionMenu
 import art.example.navigation.supportElements.MyModalBottomSheet
+import art.example.screen.FolderScreens
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -89,13 +96,13 @@ fun MyProfile(
     var showUserEditDialog by remember { mutableStateOf(false) }
 
     val menuItems = mutableListOf(
-        MenuItem(
+        GeneralMenuItem(
             label = "Edit account info",
-            onClick = { showUserEditDialog = true }
+            onClickAction = { showUserEditDialog = true }
         ),
-        MenuItem(
+        GeneralMenuItem(
             label = "Log out",
-            onClick = { userViewModel.logout { navController.navigate(Screen.HelloScreen.route){ popUpTo(0)} } }
+            onClickAction = { userViewModel.logout { navController.navigate(MiscScreens.HelloScreen.route){ popUpTo(0)} } }
         )
     )
 
@@ -128,57 +135,19 @@ fun MyProfile(
         }
     ) { paddingValues ->
         // Main container
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Upper box for user profile info
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp) // Space between profile and tabs
-            ) {
-                if (isLoading) {
-                    // Show loading indicator for user profile
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else {
-                    currentUser?.let { user ->
-                        UserCard(
-                            user = user
-                        )
-                    } ?: run {
-                        Text(text = "User not found", modifier = Modifier.align(Alignment.Center))
-                    }
-                }
-            }
-
-            // Lower box for toggling between posts and folders
-            Column(modifier = Modifier.fillMaxSize()) {
-                // TabRow for switching between posts and folders
-                TabRow(selectedTabIndex = selectedTabIndex.intValue) {
-                    Tab(
-                        selected = selectedTabIndex.intValue == 0,
-                        onClick = { selectedTabIndex.intValue = 0 },
-                        text = { Text("Posts") }
-                    )
-                    Tab(
-                        selected = selectedTabIndex.intValue == 1,
-                        onClick = { selectedTabIndex.intValue = 1 },
-                        text = { Text("Folders") }
-                    )
-                }
-
-                // Display the selected content based on the selected tab
-                when (selectedTabIndex.intValue) {
-                    0 -> UserPostsList(usersPosts = userPosts, navController, isLoading =  isLoadingPost) // Pass loading status
-                    1 -> userFolders?.let { UserFoldersList(userFolders = it, navController,isFolderLoading ) } // Your user folders list implementation
-                }
-            }
+            item { ProfileHeader(isLoading, currentUser) }
+            item { ProfileTabs(selectedTabIndex) }
+            item { ProfileTabContent(selectedTabIndex, userPosts, userFolders, navController, isLoadingPost, isFolderLoading) }
         }
-    }
 
+    }
     // open menu on More clicked button
     MyModalBottomSheet(
         showDialog = showMoreClickDialog,
@@ -200,6 +169,73 @@ fun MyProfile(
         )
     }
 }
+
+
+// profile header component
+    @Composable
+    fun ProfileHeader(isLoading: Boolean, currentUser: User?){
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
+            if(isLoading){
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                currentUser?.let { user ->
+                    UserCard(user = user)
+                } ?: run {
+                    Text(text = "User not found", modifier = Modifier.align(Alignment.Center))
+                }
+            }
+        }
+    }
+
+    // for folder and post list tabs
+    @Composable
+    fun ProfileTabs(
+        selectedTabIndex : MutableState<Int>
+    ){
+        TabRow(selectedTabIndex = selectedTabIndex.value) {
+            Tab(
+                selected = selectedTabIndex.value == 0,
+                onClick = { selectedTabIndex.value = 0 },
+                text = { Text("Posts") }
+            )
+            Tab(
+                selected = selectedTabIndex.value == 1,
+                onClick = { selectedTabIndex.value = 1 },
+                text = { Text("Folders") }
+            )
+        }
+    }
+
+
+@Composable
+fun ProfileTabContent(
+    selectedTabIndex: MutableState<Int>,
+    userPosts: List<Post>,
+    userFolders: List<Folder>?,
+    navController: NavHostController,
+    isLoadingPost: Boolean,
+    isFolderLoading: Boolean
+) {
+    when (selectedTabIndex.value) {
+        0 -> UserPostsList(
+            usersPosts = userPosts,
+            navController = navController,
+            isLoading = isLoadingPost
+        )
+        else -> UserFolderList(
+            userFolders = userFolders,
+            navController = navController,
+            isFolderLoading = isFolderLoading
+        )
+    }
+}
+
+
+
 
 @Composable
 fun EditUserInfoDialog(
@@ -231,7 +267,8 @@ fun EditUserInfoDialog(
                 TagSelectionMenu(
                     tags = tagList,
                     selectedTags = selectedTagIds.value,
-                    onTagSelected = { selectedTagIds.value = it }
+                    onTagSelected = { selectedTagIds.value = it },
+                    onDismiss = {}
                 )
             }
         },
@@ -264,6 +301,7 @@ fun EditUserInfoDialog(
 }
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserCard(user: User) {
     Card(
@@ -284,8 +322,13 @@ fun UserCard(user: User) {
                 if (tags.isNotEmpty()){
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Preferred Tags:", fontSize = 16.sp, color = Color.Black)
-                    tags.forEach { tag ->
-                        TagBox(tag.name)
+                    FlowRow(
+                        modifier = Modifier.padding(top = 8.dp),
+                        maxItemsInEachRow = 3,
+                    ) { tags.forEach { tag ->
+                        TagBox(tag = tag.name)
+                    }
+
                     }
                 }
             }
@@ -293,6 +336,50 @@ fun UserCard(user: User) {
     }
 }
 
+@Composable
+fun UserFolderList(
+    userFolders: List<Folder>?,
+    navController: NavHostController,
+    isFolderLoading: Boolean
+){
+    when {
+        isFolderLoading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+        userFolders.isNullOrEmpty() -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+            ) {
+                Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
+            }
+        }
+        else -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                userFolders.forEach { folder ->
+                    FolderCard(
+                        folder = folder,
+                        onClick = {
+                            navController.navigate(FolderScreens.FolderDetail.createRoute(folder.id))
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun UserPostsList(
@@ -321,22 +408,19 @@ fun UserPostsList(
             }
         }
         else -> {
-            // Display user posts list when not loading and data is available
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(1),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(8.dp)
+            // Use LazyColumn to display posts
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp) // Spacing between items
             ) {
-                items(usersPosts) { post ->
-                        PostCard(
-                            post = post,
-                            onClick = {
-                                // Navigate to post details when the post is clicked
-                                navController.navigate(Screen.PostDetail.createRoute(post.id))
-                            },
-                            menuItems = menuItems
-                        )
-
+                usersPosts.forEach { post ->
+                    PostCard(
+                        post = post,
+                        onClick = { navController.navigate(PostScreens.PostDetail.createRoute(post.id)) },
+                        menuItems = menuItems
+                    )
                 }
             }
         }
@@ -354,43 +438,48 @@ fun UserFoldersList(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(8.dp)
     ) {
-        if (isLoadingFolder) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),  // Take up available vertical space
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            if (userFolders.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .wrapContentSize(Alignment.Center)
-                ) {
-                    Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
+        // Main content
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            when {
+                isLoadingFolder -> {
+                    // Show loading indicator
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
                 }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),  // Take up available vertical space
-                    contentPadding = PaddingValues(8.dp)
-                ) {
-                    items(userFolders) { folder ->
-                        FolderCard(
-                            folder = folder,
-                            onClick = {
-                                navController.navigate(Screen.FolderDetail.createRoute(folderId = folder.id))
-                            }
-                        )
+                userFolders.isEmpty() -> {
+                    // Show "No Folders" message
+                    Text(
+                        text = "No Folders",
+                        fontSize = 20.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                else -> {
+                    // Show folder list
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        userFolders.forEach { folder ->
+                            FolderCard(
+                                folder = folder,
+                                onClick = {
+                                    navController.navigate(FolderScreens.FolderDetail.createRoute(folderId = folder.id))
+                                },
+                            )
+                        }
+
                     }
                 }
             }
@@ -400,13 +489,14 @@ fun UserFoldersList(
         CreateFolderButton(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(top = 16.dp),
             onClick = {
-                navController.navigate(Screen.CreateFolder.route)
+                navController.navigate(FolderScreens.CreateFolder.route)
             }
         )
     }
 }
+
 
 
 @Composable

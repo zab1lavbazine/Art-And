@@ -1,26 +1,37 @@
 package art.example.screen
 
-sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object PostsScreen : Screen("posts")
-    object PostDetail : Screen("postDetail/{postId}") { // Ensure this is correct
+sealed class Screen(val route: String)
+
+interface AuthScreens {
+    data object Login : Screen("login")
+    data object Register : Screen("register")
+    data object ResetPassword: Screen("reset_password")
+    data object NewPassword: Screen("new_password")
+}
+
+interface PostScreens {
+    data object PostsScreen : Screen("posts")
+    data object PostDetail : Screen("postDetail/{postId}") {
         fun createRoute(postId: Long) = "postDetail/$postId"
     }
+    data object CreatePost : Screen("posts/createPost")
+}
 
-    object CreatePost : Screen("posts/createPost")
-    object FolderDetail: Screen("folderDetail/{folderId}") {
+interface FolderScreens {
+    data object FolderDetail : Screen("folderDetail/{folderId}") {
         fun createRoute(folderId: Long) = "folderDetail/$folderId"
     }
+    data object CreateFolder : Screen("createFolder")
+}
 
-    object UserDetail : Screen("user/{userId}"){
+interface UserScreens {
+    data object UserDetail : Screen("user/{userId}") {
         fun createRoute(userId: Long) = "user/$userId"
     }
+    data object MyProfile : Screen("profile")
+}
 
-    object MyProfile: Screen("profile")
-
-    object SearchScreen: Screen("search")
-
-    object RegisterScreen : Screen("register")
-    object CreateFolder : Screen("createFolder")
-    object HelloScreen: Screen("helloScreen")
+interface MiscScreens {
+    data object SearchScreen : Screen("search")
+    data object HelloScreen : Screen("helloScreen")
 }

@@ -1,42 +1,36 @@
 package com.example.arthub.api
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import art.example.api.service.FolderApiService
 import art.example.api.service.PostApiService
 import art.example.api.service.TagApiService
 import art.example.api.service.UserApiService
+import art.example.modules.LocalDateTimeAdapter
+import com.example.art.R
+import com.squareup.moshi.Moshi
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.moshi.MoshiConverterFactory
 
-@SuppressLint("StaticFieldLeak")
 object RetrofitInstance {
 
-    private lateinit var context: Context
+    private lateinit var retrofit: Retrofit
 
+
+
+    // Initialize the Retrofit instance with context
     fun initialize(context: Context) {
-        this.context = context
-    }
+        val baseUrl = context.getString(R.string.api_url)
 
-    private const val BASE_URL: String = "http://arthub-backend-dev-kindiole-dev.apps.sandbox-m3.1530.p1.openshiftapps.com"
-
-    // Create OkHttpClient with the interceptor
-    private fun getOkHttpClient(context: Context): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor { chain: Interceptor.Chain ->
-                val requestBuilder = chain.request().newBuilder()
-                // Retrieve the token from SharedPreferences
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
                 val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                 val token = sharedPreferences.getString("auth_token", null)
 
-
-                val originalRequest = chain.request()
-                // Add the token to the request header if it exists
-                if (token != null && !isAuthEndpoint(originalRequest.url.toString())) {
+                val requestBuilder = chain.request().newBuilder()
+                if (token != null && !isAuthEndpoint(chain.request().url.toString())) {
                     requestBuilder.addHeader("Authorization", "Bearer $token")
                 }
 
@@ -47,45 +41,23 @@ object RetrofitInstance {
                 chain.proceed(requestBuilder.build())
             }
             .build()
-    }
 
-
-
-    // Create Retrofit instance with the OkHttpClient
-    private fun getRetrofitInstance(): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(getOkHttpClient(context))
+        retrofit = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    fun getPostApiService(): PostApiService {
-        return getRetrofitInstance().create(PostApiService::class.java)
-    }
-
-    fun getTagApiService(): TagApiService {
-        return getRetrofitInstance().create(TagApiService::class.java)
-    }
-
-    fun getUserApiService(): UserApiService {
-        return getRetrofitInstance().create(UserApiService::class.java)
-    }
-
-    fun getFolderApiService(): FolderApiService {
-        return getRetrofitInstance().create(FolderApiService::class.java)
-    }
-
-    // Method to create an authenticated request
-    fun createAuthenticatedRequest(authToken: String?): Request {
-        val builder = Request.Builder()
-        if (!authToken.isNullOrEmpty()) {
-            builder.addHeader("Authorization", "Bearer $authToken")
-        }
-        return builder.build()
-    }
-
     private fun isAuthEndpoint(url: String): Boolean {
-        return url.contains("login", ignoreCase = true) || url.contains("signup", ignoreCase = true)
+        return url.contains("login", ignoreCase = true)
+                || url.contains("signup", ignoreCase = true)
+                || url.contains("reset-password", ignoreCase = true)
+                || url.contains("/reset-password-request", ignoreCase = true)
     }
+
+    fun getPostApiService(): PostApiService = retrofit.create(PostApiService::class.java)
+    fun getTagApiService(): TagApiService = retrofit.create(TagApiService::class.java)
+    fun getUserApiService(): UserApiService = retrofit.create(UserApiService::class.java)
+    fun getFolderApiService(): FolderApiService = retrofit.create(FolderApiService::class.java)
 }

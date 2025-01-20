@@ -28,8 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
+import art.example.screen.PostScreens
 import art.example.screen.Screen
-
+import art.example.screen.UserScreens
 
 
 enum class NavigationItem(
@@ -37,9 +38,9 @@ enum class NavigationItem(
     val icon: ImageVector,
     val route: String
 ) {
-    POSTS("Posts", Icons.Filled.Home, Screen.PostsScreen.route),
-    NEW("New", Icons.Filled.Add, Screen.CreatePost.route),
-    PROFILE("Profile", Icons.Filled.Person, Screen.MyProfile.route)
+    POSTS("Posts", Icons.Filled.Home, PostScreens.PostsScreen.route),
+    NEW("New", Icons.Filled.Add, PostScreens.CreatePost.route),
+    PROFILE("Profile", Icons.Filled.Person, UserScreens.MyProfile.route)
 }
 
 
@@ -154,7 +155,32 @@ fun MyTopAppBar(
 }
 
 
-data class MenuItem(
-    val label: String,
-    val onClick: () -> Unit
-)
+
+
+abstract class MenuItem(val label: String){
+    abstract fun onClick()
+}
+
+class GeneralMenuItem(
+    label: String,
+    private val onClickAction: () -> Unit
+): MenuItem(label){
+    override fun onClick() {
+        onClickAction()
+    }
+}
+
+class ExtendedMenuItem<T>(
+    label: String,
+    private val onClickAction: (T) -> Unit,
+    var elementId: T
+): MenuItem(label) {
+    override fun onClick() {
+        onClickAction(elementId)
+    }
+}
+
+//data class MenuItem(
+//    val label: String,
+//    val onClick: () -> Unit
+//)

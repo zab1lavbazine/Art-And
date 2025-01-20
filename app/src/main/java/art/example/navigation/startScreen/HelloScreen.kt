@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
+import art.example.screen.AuthScreens
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -31,8 +34,8 @@ fun HelloScreen(navController: NavController) {
             if (savedUser.username.isNotEmpty() && savedUser.password.isNotEmpty()){
                 userViewModel.login(savedUser.username, savedUser.password) {
                     token -> if (token.isNotEmpty()){
-                        navController.navigate(Screen.PostsScreen.route){
-                            popUpTo(Screen.HelloScreen.route) { inclusive = true}
+                        navController.navigate(PostScreens.PostsScreen.route){
+                            popUpTo(MiscScreens.HelloScreen.route) { inclusive = true}
                         }
                 }
                 }
@@ -58,14 +61,14 @@ fun HelloScreen(navController: NavController) {
         )
 
         Button(
-            onClick = { navController.navigate(Screen.Login.route) },
+            onClick = { navController.navigate(AuthScreens.Login.route) },
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
             Text("Go to Login Page")
         }
 
         Button(
-            onClick = { navController.navigate(Screen.RegisterScreen.route) },
+            onClick = { navController.navigate(AuthScreens.Register.route) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Go to Register Page")

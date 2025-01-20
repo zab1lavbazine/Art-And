@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
@@ -12,7 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import art.example.ViewModel.UserViewModel
-import art.example.screen.Screen
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 
 
 fun determineStartDestination(
@@ -25,15 +27,15 @@ fun determineStartDestination(
         userViewModel.login(savedUser.username, savedUser.password) { token ->
 
             if (token.isNotEmpty()) {
-                onStartDestinationDetermined(Screen.PostsScreen.route)  // Update the start destination after login
+                onStartDestinationDetermined(PostScreens.PostsScreen.route)  // Update the start destination after login
             } else {
                 Log.d("FLOW", "ERROR LOGGING IN AUTO")
-                onStartDestinationDetermined(Screen.HelloScreen.route)  // No user credentials, navigate to HelloScreen
+                onStartDestinationDetermined(MiscScreens.HelloScreen.route)  // No user credentials, navigate to HelloScreen
             }
         }
     } else {
         Log.d("FLOW", "No saved credentials, navigating to HelloScreen")
-        onStartDestinationDetermined(Screen.HelloScreen.route)  // If no credentials, navigate to HelloScreen
+        onStartDestinationDetermined(MiscScreens.HelloScreen.route)  // If no credentials, navigate to HelloScreen
     }
 }
 

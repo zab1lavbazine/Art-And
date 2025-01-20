@@ -145,6 +145,7 @@ class FolderViewModel(
             try {
                 val currentUserId = sharedPreferences.getLong("current_user_id", -1)
                 folderRepository.savePostInFolder(post, folder, currentUserId)
+                Log.d("FLOW", "Saving post in the folder post: $post , folder: $folder")
             }catch (e: Exception){
                 Log.d("FLOW", "Error with saving post in folder")
 

@@ -1,12 +1,9 @@
 package art.example.navigation.postScreen
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,18 +41,30 @@ import art.example.ViewModel.UserViewModel
 import art.example.api.data.Folder
 import art.example.api.data.Post
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.supportElements.MyModalBottomSheet
 import art.example.ViewModel.FolderViewModel
 import art.example.ViewModel.TagViewModel
+import art.example.api.data.Comment
 import art.example.api.data.Tag
 import art.example.api.data.User
+import art.example.modules.MenuItemBuilder
+import art.example.navigation.ExtendedMenuItem
+import art.example.navigation.GeneralMenuItem
 import art.example.navigation.supportElements.ResolvePostImage
 import art.example.screen.Screen
+import art.example.screen.UserScreens
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -78,11 +84,16 @@ fun PostDetailScreen(
 
     // Observe the selected post and loading state
     val selectedPost by postViewModel.selectedPost.observeAsState()
+    val selectedPostComments by postViewModel.selectedPostComments.observeAsState()
+
     val isLoading by postViewModel.isLoading.observeAsState(initial = true) // Use an initial value
     val tags by tagViewModel.tags.observeAsState(emptyList())
 
     // for the folder dialog
     val userFolders by folderViewModel.folders.observeAsState(emptyList())
+
+    var newComment by remember { mutableStateOf("") }
+    var showCommentModal by remember { mutableStateOf(false) }
 
 
     val showDialog = remember { mutableStateOf(false) }
@@ -91,40 +102,56 @@ fun PostDetailScreen(
 
 
     val menuItems = mutableListOf(
-        MenuItem(
+        GeneralMenuItem(
             label = "Add to folder",
-            onClick = {
+            onClickAction = {
                 showDialog.value = true
             }
         )
     )
 
+    var commentItems : MutableList<MenuItem> = mutableListOf()
+
     selectedPost?.let { post ->
         if (post.patron.id == currentUser?.id) {
             menuItems.add(
-                MenuItem(
+                GeneralMenuItem(
                     label = "Edit post",
-                    onClick = {
+                    onClickAction = {
                         showEditDialog = true
                     }
                 )
             )
             menuItems.add(
-                MenuItem(
+                GeneralMenuItem(
                     label = "Delete post",
-                    onClick = {
+                    onClickAction = {
                         postViewModel.deletePostById(postId)
                         navController.popBackStack()
                     }
                 )
             )
+
+            commentItems = MenuItemBuilder()
+                .addExtendedItem(
+                    label = "Delete Comment",
+                    elementId = 0L,
+                    onClick = { id ->
+                        postViewModel.deleteCommentByIdFromPost(postId, id) // Use the id here
+                    }
+                )
+                .build()
+                .toMutableList()
+
         }
     }
+
 
 
     // Load the post details when the postId changes
     LaunchedEffect(postId) {
         postViewModel.loadById(postId)
+        postViewModel.getPostCommentsByPostId(postId)
         userViewModel.getCurrentUser()
         folderViewModel.getCurrentUserFolders()
         tagViewModel.loadTags()
@@ -147,28 +174,55 @@ fun PostDetailScreen(
         },
         bottomBar = {
             BottomNavigationBar(navController = navController)
+        },
+        floatingActionButton = {
+            androidx.compose.material3.FloatingActionButton(
+                onClick = { showCommentModal = true },
+                modifier = Modifier
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Text("+", fontSize = 24.sp, color = Color.White)
+            }
+
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            selectedPost?.let { post ->
-                PostCardItem(
-                    post = post,
-                    onAddToFolderClick = { selectedFolder ->
-                        folderViewModel.savePostInFolder(post, selectedFolder)
-                        showDialog.value = false // Hide dialog after saving
-                    },
-                    showDialog = showDialog,
-                    userFolders = userFolders,
-                    navController = navController
-                )
 
+        LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues) // Add padding to prevent overlapping with the comment section
+            ) {
+                // Display post details
+                item {
+                    selectedPost?.let { post ->
+                        PostCardItem(
+                            post = post,
+                            onAddToFolderClick = { selectedFolder ->
+                                folderViewModel.savePostInFolder(post, selectedFolder)
+                                showDialog.value = false // Hide dialog after saving
+                            },
+                            showDialog = showDialog,
+                            userFolders = userFolders,
+                            navController = navController
+                        )
+                    }
+                }
+
+                // Display comments
+                selectedPostComments?.let { comments ->
+                    items(comments, key = { it.id }) { comment ->
+                        CommentItem(comment = comment, commentItems = commentItems)
+                    }
+                }
             }
-        }
+
     }
+
     MyModalBottomSheet(
         showDialog = showBottomSheet,
         onDismissRequest = {
@@ -188,7 +242,56 @@ fun PostDetailScreen(
             }
         )
     }
+    if (showCommentModal) {
+        CommentModal(
+            newComment = newComment,
+            onCommentChange = { newComment = it },
+            onDismiss = { showCommentModal = false },
+            onSubmit = {
+                if (newComment.isNotBlank()) {
+                    postViewModel.postNewCommentUnderPostWithId(postId, newComment)
+                    newComment = ""
+                    showCommentModal = false
+                }
+            }
+        )
+    }
+
 }
+
+
+@Composable
+fun CommentModal(
+    newComment: String,
+    onCommentChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSubmit: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add a Comment") },
+        text = {
+            TextField(
+                value = newComment,
+                onValueChange = onCommentChange,
+                placeholder = { Text("Write your comment here") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onSubmit) {
+                Text("Submit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+
 
 
 @SuppressLint("MutableCollectionMutableState")
@@ -223,7 +326,8 @@ fun EditPostDialog(
                 TagSelectionMenu(
                     tags = tagsList,
                     selectedTags = selectedTagIds.value,
-                    onTagSelected = { selectedTagIds.value = it }
+                    onTagSelected = { selectedTagIds.value = it },
+                    onDismiss = {}
                 )
             }
         },
@@ -254,6 +358,75 @@ fun EditPostDialog(
     )
 }
 
+@Composable
+fun CommentItem(
+    comment: Comment,
+    commentItems: List<MenuItem> = emptyList(),
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp)
+    ) {
+        // Author's username
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = comment.authorUsername,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 4.dp) // Space between username and comment
+            )
+
+            // Comment text
+            Text(
+                text = comment.text,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // More options icon
+        if (commentItems.isNotEmpty()) {
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+            }
+        }
+
+        // Dropdown menu
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.3f) // Adjust width of the dropdown menu
+        ) {
+            commentItems.forEach { commentItem ->
+                DropdownMenuItem(
+                    text = { Text(text = commentItem.label) },
+                    onClick = {
+                        if (commentItem is ExtendedMenuItem<*>) {
+                            val item = commentItem as? ExtendedMenuItem<Long>
+                            item?.let {
+                                it.elementId = comment.id
+                                it.onClick()
+                            }
+                        }
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
 
 
 
@@ -269,7 +442,6 @@ fun PostCardItem(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
 
@@ -311,7 +483,7 @@ fun PostCardItem(
                         .padding(start = 8.dp, end = 4.dp)
                 )
 
-                UsernameTag(patron = post.patron, onClick = { navController.navigate(Screen.UserDetail.createRoute(userId = post.patron.id)) })
+                UsernameTag(patron = post.patron, onClick = { navController.navigate(UserScreens.UserDetail.createRoute(userId = post.patron.id)) })
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -350,7 +522,7 @@ fun FolderSelectionDialog(
         text = {
             LazyColumn(
                 modifier = Modifier
-                    .heightIn(min = 100.dp) // Optional: set a minimum height
+                    .heightIn(max = 200.dp, min = 100.dp) // Optional: set a minimum height
             ) {
                 // Correct usage of items for a list of folders
                 items(userFolders) { folder ->
@@ -393,7 +565,7 @@ fun UsernameTag(patron: User, onClick: () -> Unit){
                 color = Color.LightGray,
                 shape = MaterialTheme.shapes.small
             )
-            .clickable{ onClick() }
+            .clickable { onClick() }
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ){
         Text(

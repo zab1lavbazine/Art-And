@@ -7,6 +7,7 @@ bom = "2024.04.01"
 coilCompose = "2.6.0"
 coilComposeVersion = "2.6.0"
 compiler = "4.12.0"
+converterMoshi = "2.9.0"
 glide = "4.12.0"
 koinAndroid = "3.2.0"
 koinAndroidxCompose = "3.2.0"
@@ -15,12 +16,14 @@ coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlinxDatetime = "0.4.1"
 lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.3"
 composeBom = "2024.10.00"
 lottieCompose = "6.0.0"
 material = "1.12.0"
 materialVersion = "1.7.4"
+moshiKotlin = "1.15.0"
 navigationCompose = "2.8.3"
 navigationComposeVersion = "2.8.3"
 okhttp = "4.12.0"
@@ -72,6 +75,7 @@ bom = { module = "androidx.compose:bom", version.ref = "bom" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-compose-v200 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
+converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -88,9 +92,11 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 material3 = { module = "androidx.compose.material3:material3" }
+moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 okhttp3-okhttp-v493 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttpVersion" }
 okhttp3-logging-interceptor-v493 = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptorVersion" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
@@ -106,7 +112,7 @@ androidx-paging-common-android = { group = "androidx.paging", name = "paging-com
 
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.6.1" }
+android-application = { id = "com.android.application", version = "8.5.0" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "1.9.0" }
 ksp = { id = "com.google.devtools.ksp", version = "1.9.10-1.0.13" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "1.9.0" }

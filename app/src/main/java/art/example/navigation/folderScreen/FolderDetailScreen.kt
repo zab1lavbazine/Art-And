@@ -41,10 +41,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import art.example.ViewModel.FolderViewModel
 import art.example.ViewModel.UserViewModel
+import art.example.modules.MenuItemBuilder
+import art.example.navigation.GeneralMenuItem
 import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.postScreen.PostCard
 import art.example.navigation.supportElements.MyModalBottomSheet
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -62,6 +66,7 @@ fun FolderDetailScreen(
     var isEditMode by remember { mutableStateOf(false) }
     var folderTitle by remember { mutableStateOf("") }
     var folderDescription by remember { mutableStateOf("") }
+    var warningMessage by remember { mutableStateOf("") }
 
     // State to control bottom sheet visibility
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -73,16 +78,20 @@ fun FolderDetailScreen(
 
 
     val menuItems = listOf(
-        MenuItem(
+        GeneralMenuItem(
             label = "Update folder info",
-            onClick = {
+            onClickAction = {
+                selectedFolder?.let{ folder ->
+                    folderTitle = folder.title
+                    folderDescription = folder.description
+                }
                 showBottomSheet = false
                 isEditMode = true
             }
         ),
-        MenuItem(
+        GeneralMenuItem(
             label = "Delete folder",
-            onClick = {
+            onClickAction = {
                 showBottomSheet = false
                 selectedFolder?.let { folder ->
                     folderViewModel.deleteFolderById(folder.id)
@@ -97,7 +106,8 @@ fun FolderDetailScreen(
             MyTopAppBar(
                 title = "Detailed folder",
                 showBackButton = true,
-                onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
+                onSearchClicked = { navController.navigate(MiscScreens.SearchScreen.route) },
+                showMoreClickedButton = true,
                 onMoreClicked = {
                     showBottomSheet = true
                 }, // Show bottom sheet on more button click
@@ -154,22 +164,15 @@ fun FolderDetailScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(8.dp)
                     ) {
-                        items(folder.posts ?: emptyList()) { post ->
+                        items(folder.posts) { post ->
                             // adding new menu item to delete post from folder
-                            val menuItems = listOf(
-                                MenuItem(
-                                    label = "Delete post",
-                                    onClick = {
-                                        folderViewModel.deletePostFromFolder(post, folder)
-                                    }
-                                )
-                            )
+                            val postMenuItems = MenuItemBuilder().addItem(label = "Delete post", onClick = {folderViewModel.deletePostFromFolder(post, folder)}).build()
                             PostCard(
                                 post = post,
                                 onClick = {
-                                    navController.navigate(Screen.PostDetail.createRoute(post.id))
+                                    navController.navigate(PostScreens.PostDetail.createRoute(post.id))
                                 },
-                                menuItems = menuItems
+                                menuItems = postMenuItems
                             )
                         }
                     }
@@ -208,7 +211,10 @@ fun FolderDetailScreen(
 
                                 OutlinedTextField(
                                     value = folderTitle,
-                                    onValueChange = { folderTitle = it },
+                                    onValueChange = {
+                                        folderTitle = it
+                                                    warningMessage = ""
+                                                    },
                                     label = { Text("Folder Name") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -221,6 +227,14 @@ fun FolderDetailScreen(
                                     label = { Text("Description") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
+                                // show warning
+                                if (warningMessage.isNotEmpty()){
+                                    Text(
+                                        text = warningMessage,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -239,12 +253,16 @@ fun FolderDetailScreen(
 
                                     Button(
                                         onClick = {
-                                            folderViewModel.updateFolderInfo(
-                                                id = folderId,
-                                                title = folderTitle,
-                                                description = folderDescription
-                                            )
-                                            isEditMode = false
+                                            if (folderTitle.isBlank()){
+                                                warningMessage = "Folder title is required."
+                                            } else {
+                                                folderViewModel.updateFolderInfo(
+                                                    id = folderId,
+                                                    title = folderTitle,
+                                                    description = folderDescription
+                                                )
+                                                isEditMode = false
+                                            }
                                         }
                                     ) {
                                         Text("Submit")

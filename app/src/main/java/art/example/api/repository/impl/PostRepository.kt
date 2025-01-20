@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import art.example.api.data.Comment
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Post
 import art.example.api.repository.IPostRepository
@@ -42,6 +43,7 @@ class PostRepository(
     suspend fun searchPosts(query : String, pageSize: Int, pageNumber: Int) : ResponseItem<Post>{
         return try {
             val response = postApiService.searchPosts(query, pageNumber, pageSize)
+            Log.d("FLOW", "Founded posts: ${response.content}")
             response
         } catch (e: Exception){
             Log.d("FLOW", "Error searching for posts")
@@ -102,6 +104,21 @@ class PostRepository(
         val postApi = postApiService.getPostById(id)
 
         return postApi
+    }
+
+    suspend fun getPostCommentsByPostId(postId: Long): List<Comment>{
+        val comments = postApiService.getPostCommentsByPostId(postId)
+        return comments
+    }
+
+    suspend fun postNewCommentUnderPostWithId( postId: Long, comment: String): Comment?{
+        val newComment = postApiService.postNewCommentUnderPostWithId( postId, comment)
+        return newComment
+    }
+
+    suspend fun deleteCommentByIdFromPost(postId: Long, commentId: Long) {
+        Log.d("FLOW", "deleting comment : $commentId, from post: $postId")
+        postApiService.deleteCommentByIdFromPost(postId, commentId)
     }
 
     suspend fun createPost(postDTO: PostDTO, imageBitmap: Bitmap): Post? {
