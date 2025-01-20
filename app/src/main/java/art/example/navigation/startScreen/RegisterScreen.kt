@@ -118,12 +118,3 @@ fun RegisterScreen(
     }
 }
 
-// Helper function to validate email format
-fun isValidEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-}
-
-// Helper function to check for valid input
-fun isValidInput(email: String, username: String, password: String): Boolean {
-    return email.isNotEmpty() && isValidEmail(email) && username.isNotEmpty() && password.isNotEmpty()
-}

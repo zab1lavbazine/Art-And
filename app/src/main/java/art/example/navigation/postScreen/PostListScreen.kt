@@ -52,6 +52,8 @@ import art.example.navigation.MenuItem
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.supportElements.Placeholder
 import art.example.navigation.supportElements.ResolvePostImage
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -84,7 +86,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
                 title = "Posts",
                 showBackButton = false,
                 showSearchButton = true,
-                onSearchClicked = { navController.navigate(Screen.SearchScreen.route) },
+                onSearchClicked = { navController.navigate(MiscScreens.SearchScreen.route) },
                 onMoreClicked = { /* Handle more options */ }
             )
         },
@@ -134,7 +136,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
                 else -> {
                     PostGrid(
                         posts = posts,
-                        onClick = { postId -> navController.navigate(Screen.PostDetail.createRoute(postId)) },
+                        onClick = { postId -> navController.navigate(PostScreens.PostDetail.createRoute(postId)) },
                         gridState = gridState
                     )
                 }
@@ -211,14 +213,13 @@ fun PostCard(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     var expanded by remember { mutableStateOf(false) }
 
-    val maxCardWidth = screenWidth * 0.45f // Adjust the fraction for the layout
     val maxCardHeight = 200.dp // Set desired max height
 
     Card(
         modifier = Modifier
             .padding(8.dp)
             .clickable(onClick = onClick)
-            .widthIn(max = maxCardWidth)
+            .fillMaxWidth()
             .heightIn(max = maxCardHeight)
     ) {
         Box(

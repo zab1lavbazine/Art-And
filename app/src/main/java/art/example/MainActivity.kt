@@ -28,7 +28,14 @@ import art.example.navigation.startScreen.RegisterScreen
 import art.example.navigation.SearchScreen
 import art.example.navigation.profileScreen.MyProfile
 import art.example.navigation.profileScreen.UserDetailScreen
+import art.example.navigation.startScreen.NewPasswordScreen
+import art.example.navigation.startScreen.ResetPasswordScreen
+import art.example.screen.AuthScreens
+import art.example.screen.FolderScreens
+import art.example.screen.MiscScreens
+import art.example.screen.PostScreens
 import art.example.screen.Screen
+import art.example.screen.UserScreens
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -50,26 +57,8 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
     val userViewModel: UserViewModel = koinViewModel()
-
     var startDestination by remember { mutableStateOf<String?>(null) }
 
-
-    // register success callback to the login page
-    val onRegisterSuccess: () -> Unit = {
-        navController.navigate(Screen.Login.route) {
-            popUpTo(Screen.HelloScreen.route) { inclusive = true }
-        }
-    }
-
-
-
-//    val onLoginSuccess: (String) -> Unit = {
-////        navController.navigate(Screen.PostsScreen.route) {
-////            popUpTo(Screen.Login.route) { inclusive = true }
-////        }
-//    }
-
-    // Determine the start destination asynchronously
     LaunchedEffect(userViewModel) {
         determineStartDestination(
             userViewModel = userViewModel,
@@ -79,34 +68,59 @@ fun MyApp() {
         )
     }
 
-
-    if (startDestination == null){
+    if (startDestination == null) {
         LoadingScreen()
     } else {
-
-
         NavHost(navController, startDestination = startDestination!!) {
-
-            composable(Screen.RegisterScreen.route) {
+            composable(AuthScreens.Register.route) {
                 RegisterScreen(
                     navController = navController,
-                    onRegisterSuccess = onRegisterSuccess
+                    onRegisterSuccess = {
+                        navController.navigate(AuthScreens.Login.route) {
+                            popUpTo(MiscScreens.HelloScreen.route) { inclusive = true }
+                        }
+                    }
                 )
             }
 
-            composable(Screen.Login.route) {
-                LoginScreen(
-                    navController,
-                )
+            composable(AuthScreens.Login.route) {
+                LoginScreen(navController)
             }
-            composable(Screen.HelloScreen.route) { HelloScreen(navController) }
-            composable(Screen.PostsScreen.route) { PostListScreen(navController) }
-            composable(Screen.MyProfile.route) { MyProfile(navController) }
-            composable(Screen.CreatePost.route) { CreatePost(navController) }
-            composable(Screen.CreateFolder.route) { CreateFolder(navController) }
-            composable(Screen.SearchScreen.route) { SearchScreen(navController) }
+
+            composable(AuthScreens.ResetPassword.route) {
+                ResetPasswordScreen(navController)
+            }
+
+            composable(AuthScreens.NewPassword.route) {
+                NewPasswordScreen(navController)
+            }
+
+            composable(MiscScreens.HelloScreen.route) {
+                HelloScreen(navController)
+            }
+
+            composable(PostScreens.PostsScreen.route) {
+                PostListScreen(navController)
+            }
+
+            composable(UserScreens.MyProfile.route) {
+                MyProfile(navController)
+            }
+
+            composable(PostScreens.CreatePost.route) {
+                CreatePost(navController)
+            }
+
+            composable(FolderScreens.CreateFolder.route) {
+                CreateFolder(navController)
+            }
+
+            composable(MiscScreens.SearchScreen.route) {
+                SearchScreen(navController)
+            }
+
             composable(
-                Screen.PostDetail.route,
+                PostScreens.PostDetail.route,
                 arguments = listOf(navArgument("postId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val postId = backStackEntry.arguments?.getLong("postId")
@@ -116,18 +130,17 @@ fun MyApp() {
             }
 
             composable(
-                Screen.UserDetail.route,
-                arguments = listOf(navArgument("userId") { type = NavType.LongType})
+                UserScreens.UserDetail.route,
+                arguments = listOf(navArgument("userId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getLong("userId")
-                if (userId != null){
+                if (userId != null) {
                     UserDetailScreen(userId, navController = navController)
                 }
             }
 
-
             composable(
-                Screen.FolderDetail.route,
+                FolderScreens.FolderDetail.route,
                 arguments = listOf(navArgument("folderId") { type = NavType.LongType })
             ) { navBackStackEntry ->
                 val folderId = navBackStackEntry.arguments?.getLong("folderId")

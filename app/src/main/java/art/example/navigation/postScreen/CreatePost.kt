@@ -26,12 +26,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import androidx.navigation.NavController
 import art.example.ViewModel.PostViewModel
 import art.example.ViewModel.TagViewModel
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Tag
 import art.example.navigation.MyTopAppBar
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -126,7 +128,8 @@ fun CreatePost(navController: NavController) {
                     selectedTags = selectedTags,
                     onTagSelected = { newSelectedTags ->
                         selectedTags = newSelectedTags // Update selected tags
-                    }
+                    },
+                    onDismiss = {}
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -143,7 +146,7 @@ fun CreatePost(navController: NavController) {
                             postViewModel.submitPost(postDTO, imageBitmap!!)
                         }
                         // Navigate back or perform other actions
-                        navController.navigate(Screen.PostsScreen.route)
+                        navController.navigate(PostScreens.PostsScreen.route)
                     },
                     modifier = Modifier.align(Alignment.End) // Align button to the right
                 ) {
@@ -164,22 +167,31 @@ fun TagSelectionMenu(
     tags: List<Tag>, // List of tags to display
     selectedTags: Set<Long>, // Set of selected tags
     onTagSelected: (Set<Long>) -> Unit, // Callback to update selected tags
+    onDismiss: () -> Unit // Callback to dismiss the Popup
 ) {
-    var expanded by remember { mutableStateOf(false) } // For controlling the dropdown visibility
+    var showTagSelectionMenu by remember { mutableStateOf(false) } // State to control the visibility of the Popup
 
-    // Button to toggle the dropdown
-    Button(onClick = { expanded = !expanded }) {
+    // Button to trigger the Popup visibility
+    Button(onClick = { showTagSelectionMenu = true }) {
         Text("Select Tags")
     }
 
-    // Show the Dropdown Menu when expanded is true
-    if (expanded) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(2.dp, Color.Gray)
-                .padding(16.dp)
+    // Show the Popup when showTagSelectionMenu is true
+    if (showTagSelectionMenu) {
+        Popup(
+            alignment = Alignment.TopCenter, // Aligning the popup above
+            onDismissRequest = {
+                showTagSelectionMenu = false // Close the popup when dismissed
+                onDismiss() // Trigger the onDismiss callback
+            }
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .background(Color.White, shape = MaterialTheme.shapes.medium)
+                    .border(1.dp, Color.Gray, MaterialTheme.shapes.medium)
+            ) {
                 Column {
                     // Make the dropdown scrollable with LazyColumn
                     LazyColumn(
@@ -190,6 +202,7 @@ fun TagSelectionMenu(
                         items(tags) { tag ->
                             val isSelected = selectedTags.contains(tag.id)
 
+                            // List item to select/deselect a tag
                             DropdownMenuItem(
                                 onClick = {
                                     // Toggle selection state for the tag
@@ -219,9 +232,9 @@ fun TagSelectionMenu(
                         }
                     }
 
-                    // Done button to close the dropdown
+                    // Done button to close the popup
                     Button(
-                        onClick = { expanded = false },
+                        onClick = { showTagSelectionMenu = false },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 8.dp)
@@ -229,11 +242,10 @@ fun TagSelectionMenu(
                         Text("Done")
                     }
                 }
-
+            }
         }
     }
 }
-
 
 
 

@@ -19,6 +19,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import art.example.ViewModel.PostViewModel
 import art.example.navigation.postScreen.PostGrid
+import art.example.screen.PostScreens
 import art.example.screen.Screen
 import org.koin.androidx.compose.koinViewModel
 
@@ -30,9 +31,10 @@ fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier
     var triggerSearch by remember { mutableStateOf(false) }
 
     // Collect search results based on the query
-    val searchFlow = remember(searchText, triggerSearch) {
-        viewModel.searchPosts(searchText)
-    }
+    val searchFlow = remember(searchText) {
+        derivedStateOf { viewModel.searchPosts(searchText) }
+    }.value
+
     val searchResults = searchFlow.collectAsLazyPagingItems()
 
     // Remember LazyGridState
@@ -66,9 +68,12 @@ fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier
             ) {
                 BasicTextField(
                     value = searchText,
-                    onValueChange = { searchText = it },
+                    onValueChange = { searchText = it.trim() }, // Trim to avoid blank spaces causing unnecessary recomposition
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { triggerSearch = !triggerSearch }),
+                    keyboardActions = KeyboardActions(onSearch = {
+                        // Trigger the search explicitly
+                        viewModel.searchPosts(searchText)
+                    }),
                     modifier = Modifier
                         .weight(1f)
                         .padding(8.dp)
@@ -105,7 +110,7 @@ fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier
                         PostGrid(
                             posts = searchResults,
                             onClick = { postId ->
-                                navController.navigate(Screen.PostDetail.createRoute(postId))
+                                navController.navigate(PostScreens.PostDetail.createRoute(postId))
                             },
                             gridState = gridState // Pass the LazyGridState here
                         )

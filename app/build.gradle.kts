@@ -135,6 +135,10 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-auth:20.4.0")
 
+    implementation(libs.converter.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.kotlinx.datetime)
+
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
 
