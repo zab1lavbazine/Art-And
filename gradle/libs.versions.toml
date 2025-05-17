@@ -1,9 +1,10 @@
 [versions]
 accompanistSwiperefresh = "0.25.0"
-activityComposeVersion = "1.9.0"
+activityComposeVersion = "1.10.1"
 agp = "8.6.1"
-androidxMaterial = "1.x.x"
-bom = "2024.04.01"
+androidxMaterial = "1.8.1"
+androidxNavigationCompose = "2.9.0"
+composeBom = "2025.05.00"
 coilCompose = "2.6.0"
 coilComposeVersion = "2.6.0"
 compiler = "4.12.0"
@@ -11,15 +12,17 @@ converterMoshi = "2.9.0"
 glide = "4.12.0"
 koinAndroid = "3.2.0"
 koinAndroidxCompose = "3.2.0"
-kotlin = "1.9.0"
+kotlin = "2.1.20"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 kotlinxDatetime = "0.4.1"
+lifecycleLivedataKtx = "2.9.0"
+lifecycleRuntimeCompose = "2.9.0"
 lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.3"
-composeBom = "2024.10.00"
+lifecycleViewmodelCompose = "2.9.0"
 lottieCompose = "6.0.0"
 material = "1.12.0"
 materialVersion = "1.7.4"
@@ -32,18 +35,21 @@ loggingInterceptor = "4.11.0"
 loggingInterceptorVersion = "4.11.0"
 pagingCompose = "3.3.2"
 pagingRuntimeKtx = "3.3.2"
+playServicesAuth = "21.3.0"
 retrofit = "2.9.0"
-kotlinxSerializationJson = "1.5.1"
 kotlinxSerializationJsonVersion = "1.6.3"
 converterGson = "2.9.0"
 retrofit2KotlinxSerializationConverter = "0.8.0"
-roomCompiler = "2.6.1"
-roomKtx = "2.6.1"
-roomMigration = "2.6.1"
+roomCompiler = "2.7.1"
+roomKtx = "2.7.1"
+roomMigration = "2.7.1"
+roomRuntime = "2.7.1"
 runtimeLivedata = "1.7.4"
 ui = "1.7.4"
 pagingCommonAndroid = "3.3.2"
-uiVersion = "1.x.x"
+playServicesMeasurementApi = "22.4.0"
+firebaseAnalytics = "21.5.0"
+firebaseBom = "32.7.0"
 
 [libraries]
 #noinspection SimilarGradleDependency
@@ -57,6 +63,9 @@ androidx-compose-ui-ui2 = { module = "androidx.compose.ui:ui", version.ref = "ui
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout" }
+androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material = { module = "androidx.compose.material:material" }
 #noinspection SimilarGradleDependency
 androidx-material-v1xx = { module = "androidx.compose.material:material", version.ref = "androidxMaterial" }
@@ -69,13 +78,14 @@ androidx-paging-rxjava3 = { module = "androidx.paging:paging-rxjava3" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 androidx-room-migration = { module = "androidx.room:room-migration", version.ref = "roomMigration" }
-androidx-ui-v1xx = { module = "androidx.compose.ui:ui", version.ref = "uiVersion" }
-bom = { module = "androidx.compose:bom", version.ref = "bom" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 #noinspection SimilarGradleDependency
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-compose-v200 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshi" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -97,8 +107,11 @@ lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "
 material = { module = "com.google.android.material:material", version.ref = "material" }
 material3 = { module = "androidx.compose.material3:material3" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
+#noinspection SimilarGradleDependency
+navigation-compose-v277 = { module = "androidx.navigation:navigation-compose", version.ref = "androidxNavigationCompose" }
 okhttp3-okhttp-v493 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttpVersion" }
 okhttp3-logging-interceptor-v493 = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptorVersion" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 kotlinx-serialization-json-v130 = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJsonVersion" }
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
@@ -109,12 +122,17 @@ ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-paging-common-android = { group = "androidx.paging", name = "paging-common-android", version.ref = "pagingCommonAndroid" }
+play-services-measurement-api = { group = "com.google.android.gms", name = "play-services-measurement-api", version.ref = "playServicesMeasurementApi" }
 
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.5.0" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "1.9.0" }
-ksp = { id = "com.google.devtools.ksp", version = "1.9.10-1.0.13" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "1.9.0" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+ksp = { id = "com.google.devtools.ksp", version = "2.1.20-2.0.0" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 jetbrains-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+
 

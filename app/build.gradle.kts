@@ -1,13 +1,14 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.application) version "8.6.1"
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "com.example.art"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.art"
@@ -113,7 +114,6 @@ dependencies {
     implementation(libs.androidx.paging.rxjava3)
 
 
-    implementation(libs.androidx.ui.v1xx) // For Jetpack Compose
     implementation(libs.androidx.material.v1xx) // For Material components
 
 
@@ -133,7 +133,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx) // Lifecycle support
 
 
-    implementation("com.google.android.gms:play-services-auth:20.4.0")
+    implementation(libs.play.services.auth)
 
     implementation(libs.converter.moshi)
     implementation(libs.moshi.kotlin)
@@ -144,14 +144,18 @@ dependencies {
 
 
     // navigation
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(libs.navigation.compose.v277)
     // lifecycle
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-alpha03")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.4.0-alpha03")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
-    implementation("androidx.room:room-runtime:2.4.0")
+    implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx) // Room KTX library
     implementation(libs.androidx.room.migration) // Room migration library
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
 
 }

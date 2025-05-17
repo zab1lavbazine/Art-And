@@ -55,6 +55,7 @@ import art.example.api.data.Folder
 import art.example.api.data.Post
 import art.example.api.data.Tag
 import art.example.api.data.User
+import art.example.modules.AnalyticsLogger
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.GeneralMenuItem
 import art.example.navigation.MenuItem
@@ -109,6 +110,7 @@ fun MyProfile(
 
     // for getting current user from database
     LaunchedEffect(Unit) {
+        AnalyticsLogger.logEvent("my_profile")
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
         postViewModel.getCurrentUserPosts()

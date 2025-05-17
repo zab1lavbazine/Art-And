@@ -5,8 +5,6 @@ import android.util.Log
 import androidx.room.Transaction
 import art.example.api.data.ResetPasswordRequest
 import art.example.api.data.SelectedUser
-import com.google.android.gms.auth.api.credentials.Credentials
-import com.google.android.gms.auth.api.credentials.CredentialsClient
 import art.example.api.data.User
 import art.example.api.data.toTagEntity
 import art.example.api.reponses.RegisterUserDTO
@@ -20,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.security.MessageDigest
+import androidx.core.content.edit
 
 class UserRepository(
     private val userApiService: UserApiService,
@@ -29,7 +28,6 @@ class UserRepository(
 
     private var currentUser: User? = null
     private var authToken: String? = null
-    private val credentialsClient: CredentialsClient = Credentials.getClient(context)
 
     private val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
 
@@ -154,10 +152,7 @@ class UserRepository(
         withContext(Dispatchers.IO) {
             try {
                 // Clear SharedPreferences
-                sharedPreferences.edit().clear().apply()
-
-                // Revoke auto sign-in (if using Google Credentials API)
-                credentialsClient.disableAutoSignIn()
+                sharedPreferences.edit() { clear() }
 
                 // Clear in-memory cache
                 currentUser = null
@@ -216,12 +211,11 @@ class UserRepository(
 
     private fun saveAuthTokenToSharedPreferences(token: String) {
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("auth_token", token).apply()
+        sharedPreferences.edit() { putString("auth_token", token) }
     }
 
     private fun clearSavedCredentials() {
-        sharedPreferences.edit().clear().apply()
-        credentialsClient.disableAutoSignIn()
+        sharedPreferences.edit() { clear() }
     }
 
 

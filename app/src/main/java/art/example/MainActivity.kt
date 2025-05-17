@@ -36,6 +36,8 @@ import art.example.screen.MiscScreens
 import art.example.screen.PostScreens
 import art.example.screen.Screen
 import art.example.screen.UserScreens
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.analytics
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {

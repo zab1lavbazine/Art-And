@@ -59,6 +59,7 @@ import art.example.ViewModel.TagViewModel
 import art.example.api.data.Comment
 import art.example.api.data.Tag
 import art.example.api.data.User
+import art.example.modules.AnalyticsLogger
 import art.example.modules.MenuItemBuilder
 import art.example.navigation.ExtendedMenuItem
 import art.example.navigation.GeneralMenuItem
@@ -150,6 +151,7 @@ fun PostDetailScreen(
 
     // Load the post details when the postId changes
     LaunchedEffect(postId) {
+        AnalyticsLogger.logEvent("get_post", mapOf("post_id" to postId.toString()))
         postViewModel.loadById(postId)
         postViewModel.getPostCommentsByPostId(postId)
         userViewModel.getCurrentUser()

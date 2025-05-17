@@ -118,7 +118,7 @@ class UserViewModel(
                 onRegisterSuccess()
             } catch (e : Exception){
                 Log.e("FLOW", "Error with registration: $e")
-                _errorMessage.value = e.message
+                _errorMessage.value = "Failed to register"
             } finally {
                 _isLoading.value = false
             }

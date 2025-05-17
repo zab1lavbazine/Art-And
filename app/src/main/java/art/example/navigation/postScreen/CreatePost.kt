@@ -32,6 +32,7 @@ import art.example.ViewModel.PostViewModel
 import art.example.ViewModel.TagViewModel
 import art.example.api.data.DTO.PostDTO
 import art.example.api.data.Tag
+import art.example.modules.AnalyticsLogger
 import art.example.navigation.MyTopAppBar
 import art.example.screen.PostScreens
 import art.example.screen.Screen
@@ -58,6 +59,7 @@ fun CreatePost(navController: NavController) {
     val context = LocalContext.current
     // Load tags when the composable is first launched
     LaunchedEffect(Unit) {
+        AnalyticsLogger.logEvent("new_post_creation")
         tagViewModel.loadTags()
     }
 

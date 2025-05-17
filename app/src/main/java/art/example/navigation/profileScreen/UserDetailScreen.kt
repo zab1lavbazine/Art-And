@@ -32,6 +32,7 @@ import art.example.ViewModel.PostViewModel
 import art.example.ViewModel.UserViewModel
 import art.example.api.data.SelectedUser
 import art.example.api.data.User
+import art.example.modules.AnalyticsLogger
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.postScreen.TagBox
@@ -50,6 +51,7 @@ fun UserDetailScreen(
     val errorMessage by userViewModel.errorMessage.observeAsState()
 
     LaunchedEffect(userId) {
+        AnalyticsLogger.logEvent("user_profile", mapOf("user_id" to userId.toString()))
         userViewModel.getSelectedUserById(userId)
     }
 
