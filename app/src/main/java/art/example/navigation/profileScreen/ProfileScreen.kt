@@ -110,7 +110,7 @@ fun MyProfile(
 
     // for getting current user from database
     LaunchedEffect(Unit) {
-        AnalyticsLogger.logEvent("my_profile")
+
         Log.d("MyProfile", "Loading current user")
         userViewModel.getCurrentUser()
         postViewModel.getCurrentUserPosts()

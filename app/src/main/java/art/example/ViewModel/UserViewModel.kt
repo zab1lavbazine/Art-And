@@ -140,6 +140,7 @@ class UserViewModel(
                         onLoginSuccess(userRepository.getAuthToken() ?: "")
                     } else {
                         _errorMessage.value = "Login failed. Please try again."
+                        onLoginSuccess("")
                     }
                 }
             } catch (e: Exception) {

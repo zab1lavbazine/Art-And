@@ -66,6 +66,8 @@ import art.example.navigation.GeneralMenuItem
 import art.example.navigation.supportElements.ResolvePostImage
 import art.example.screen.Screen
 import art.example.screen.UserScreens
+import cz.fit.cvut.feature.language.presentation.TolgeeLanguageDropdown
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -151,7 +153,6 @@ fun PostDetailScreen(
 
     // Load the post details when the postId changes
     LaunchedEffect(postId) {
-        AnalyticsLogger.logEvent("get_post", mapOf("post_id" to postId.toString()))
         postViewModel.loadById(postId)
         postViewModel.getPostCommentsByPostId(postId)
         userViewModel.getCurrentUser()

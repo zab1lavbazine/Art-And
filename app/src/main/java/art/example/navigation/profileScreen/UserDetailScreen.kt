@@ -51,7 +51,6 @@ fun UserDetailScreen(
     val errorMessage by userViewModel.errorMessage.observeAsState()
 
     LaunchedEffect(userId) {
-        AnalyticsLogger.logEvent("user_profile", mapOf("user_id" to userId.toString()))
         userViewModel.getSelectedUserById(userId)
     }
 

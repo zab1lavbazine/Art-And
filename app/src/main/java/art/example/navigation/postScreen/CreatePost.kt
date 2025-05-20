@@ -59,7 +59,6 @@ fun CreatePost(navController: NavController) {
     val context = LocalContext.current
     // Load tags when the composable is first launched
     LaunchedEffect(Unit) {
-        AnalyticsLogger.logEvent("new_post_creation")
         tagViewModel.loadTags()
     }
 
