@@ -24,7 +24,7 @@
 | **Koin**               | Lightweight dependency injection framework       |
 | **Material Design 3**  | Modern UI components and styling                 |
 | **Material Design 1**  | Some legacy components for specific views        |
-| **Coil **              | For image loading                                |
+| **Coil**               | For image loading                                |
 
 ---
 
