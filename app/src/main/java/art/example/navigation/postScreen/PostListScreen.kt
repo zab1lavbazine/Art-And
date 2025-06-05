@@ -57,6 +57,7 @@ import art.example.screen.PostScreens
 import art.example.screen.Screen
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -83,7 +84,7 @@ fun PostListScreen(navController: NavHostController, modifier: Modifier = Modifi
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Posts",
+                title = t("Posts"),
                 showBackButton = false,
                 showSearchButton = true,
                 onSearchClicked = { navController.navigate(MiscScreens.SearchScreen.route) },

@@ -68,6 +68,8 @@ import art.example.screen.FolderScreens
 import art.example.screen.MiscScreens
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -127,7 +129,7 @@ fun MyProfile(
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "My Profile",
+                title = t("My Profile"),
                 showMoreClickedButton = true,
                 onMoreClicked = { showMoreClickDialog = true }
             )
@@ -187,7 +189,7 @@ fun MyProfile(
                 currentUser?.let { user ->
                     UserCard(user = user)
                 } ?: run {
-                    Text(text = "User not found", modifier = Modifier.align(Alignment.Center))
+                    Translate(keyName = "User not found", modifier = Modifier.align(Alignment.Center))
                 }
             }
         }
@@ -202,12 +204,12 @@ fun MyProfile(
             Tab(
                 selected = selectedTabIndex.value == 0,
                 onClick = { selectedTabIndex.value = 0 },
-                text = { Text("Posts") }
+                text = { t("Posts") }
             )
             Tab(
                 selected = selectedTabIndex.value == 1,
                 onClick = { selectedTabIndex.value = 1 },
-                text = { Text("Folders") }
+                text = { t("Folders") }
             )
         }
     }
@@ -252,18 +254,18 @@ fun EditUserInfoDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Post") },
+        title = { t("Edit Post") },
         text = {
             Column {
                 TextField(
                     value = email                                                                                                         ,
                     onValueChange = { email = it },
-                    label = { Text("Email") }
+                    label = { t("Email") }
                 )
                 TextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("Username") }
+                    label = { t("Username") }
                 )
 
                 TagSelectionMenu(
@@ -290,12 +292,12 @@ fun EditUserInfoDialog(
                     }
                 }
             ) {
-                Text("Save")
+                t("Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                t("Cancel")
             }
         }
     )
@@ -360,7 +362,7 @@ fun UserFolderList(
                     .fillMaxSize()
                     .wrapContentSize(Alignment.Center)
             ) {
-                Text(text = "No Folders", fontSize = 20.sp, color = Color.Gray)
+                Translate(keyName = "No Folders", color = Color.Gray, modifier  = Modifier)
             }
         }
         else -> {
@@ -406,7 +408,7 @@ fun UserPostsList(
                     .fillMaxSize()
                     .wrapContentSize(Alignment.Center)
             ) {
-                Text(text = "No Posts", fontSize = 20.sp, color = Color.Gray)
+                Translate(keyName = "No Posts", color = Color.Gray,  modifier = Modifier)
             }
         }
         else -> {
@@ -430,74 +432,74 @@ fun UserPostsList(
 }
 
 
-
-@Composable
-fun UserFoldersList(
-    userFolders: List<Folder>,
-    navController: NavHostController,
-    isLoadingFolder: Boolean
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-    ) {
-        // Main content
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            when {
-                isLoadingFolder -> {
-                    // Show loading indicator
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
-                userFolders.isEmpty() -> {
-                    // Show "No Folders" message
-                    Text(
-                        text = "No Folders",
-                        fontSize = 20.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                else -> {
-                    // Show folder list
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        userFolders.forEach { folder ->
-                            FolderCard(
-                                folder = folder,
-                                onClick = {
-                                    navController.navigate(FolderScreens.FolderDetail.createRoute(folderId = folder.id))
-                                },
-                            )
-                        }
-
-                    }
-                }
-            }
-        }
-
-        // Create Folder Button
-        CreateFolderButton(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            onClick = {
-                navController.navigate(FolderScreens.CreateFolder.route)
-            }
-        )
-    }
-}
+//id
+//@Composable
+//fun UserFoldersList(
+//    userFolders: List<Folder>,
+//    navController: NavHostController,
+//    isLoadingFolder: Boolean
+//) {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(8.dp)
+//    ) {
+//        // Main content
+//        Box(
+//            modifier = Modifier
+//                .weight(1f)
+//                .fillMaxWidth()
+//        ) {
+//            when {
+//                isLoadingFolder -> {
+//                    // Show loading indicator
+//                    CircularProgressIndicator(
+//                        modifier = Modifier
+//                            .align(Alignment.Center)
+//                    )
+//                }
+//                userFolders.isEmpty() -> {
+//                    // Show "No Folders" message
+//                    Text(
+//                        text = "No Folders",
+//                        fontSize = 20.sp,
+//                        color = Color.Gray,
+//                        modifier = Modifier.align(Alignment.Center)
+//                    )
+//                }
+//                else -> {
+//                    // Show folder list
+//                    Column(
+//                        modifier = Modifier
+//                            .fillMaxSize()
+//                            .verticalScroll(rememberScrollState()),
+//                        verticalArrangement = Arrangement.spacedBy(8.dp)
+//                    ) {
+//                        userFolders.forEach { folder ->
+//                            FolderCard(
+//                                folder = folder,
+//                                onClick = {
+//                                    navController.navigate(FolderScreens.FolderDetail.createRoute(folderId = folder.id))
+//                                },
+//                            )
+//                        }
+//
+//                    }
+//                }
+//            }
+//        }
+//
+//        // Create Folder Button
+//        CreateFolderButton(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(top = 16.dp),
+//            onClick = {
+//                navController.navigate(FolderScreens.CreateFolder.route)
+//            }
+//        )
+//    }
+//}
 
 
 

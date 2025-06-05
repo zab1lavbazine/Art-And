@@ -1,7 +1,10 @@
 package art.example.navigation
 
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.DropdownMenu
@@ -10,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -17,20 +21,30 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import art.example.screen.PostScreens
 import art.example.screen.Screen
 import art.example.screen.UserScreens
+import cz.fit.cvut.feature.language.presentation.TolgeeLanguageDropdown
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
+import kotlinx.coroutines.launch
 
 
 enum class NavigationItem(
@@ -58,8 +72,8 @@ fun MyBottomNavigationBar(
         items.forEach { item ->
             BottomNavigationItem(
                 label = {
-                    Text(
-                        text = item.title,
+                    Translate(
+                        keyName = item.title,
                         color = if (currentRoute == item.route) MaterialTheme.colors.onPrimary else Color.LightGray
                     )
                         },
@@ -93,11 +107,10 @@ fun BottomNavigationBar(navController: NavHostController) {
         }
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTopAppBar(
-    title: String,
+    title: AnnotatedString,
     showBackButton: Boolean = false,
     showSearchButton: Boolean = false,
     showMoreClickedButton: Boolean = false,
@@ -106,9 +119,26 @@ fun MyTopAppBar(
     onBackClicked: (() -> Unit)? = null,
     menuItems: List<MenuItem> = emptyList()
 ) {
-
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
+    var showLanguageSheet by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
+    if (showLanguageSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showLanguageSheet = false },
+            sheetState = sheetState
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TolgeeLanguageDropdown()
+            }
+        }
+    }
 
     TopAppBar(
         title = {
@@ -116,7 +146,7 @@ fun MyTopAppBar(
                 text = title,
                 color = MaterialTheme.colors.primary
             )
-                },
+        },
         navigationIcon = {
             if (showBackButton && onBackClicked != null) {
                 IconButton(onClick = onBackClicked) {
@@ -125,11 +155,23 @@ fun MyTopAppBar(
             }
         },
         actions = {
-            if (showSearchButton && onSearchClicked != null){
+            if (showSearchButton && onSearchClicked != null) {
                 IconButton(onClick = onSearchClicked) {
                     Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
                 }
             }
+
+            IconButton(onClick = {
+                scope.launch {
+                    showLanguageSheet = true
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = "Choose Language"
+                )
+            }
+
             if (showMoreClickedButton && onMoreClicked != null) {
                 IconButton(onClick = onMoreClicked) {
                     Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "More options")
@@ -140,15 +182,15 @@ fun MyTopAppBar(
 
     DropdownMenu(
         expanded = expanded,
-        onDismissRequest = { expanded = false } // Close menu when clicked outside
+        onDismissRequest = { expanded = false }
     ) {
         menuItems.forEach { menuItem ->
             DropdownMenuItem(
-                text = { Text (menuItem.label) },
+                text = { Text(menuItem.label) },
                 onClick = {
-                    menuItem.onClick() // Call the item's click action
-                    expanded = false // Close menu after click
-                },
+                    menuItem.onClick()
+                    expanded = false
+                }
             )
         }
     }

@@ -36,6 +36,7 @@ import art.example.modules.AnalyticsLogger
 import art.example.navigation.MyTopAppBar
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("MutableCollectionMutableState")
@@ -69,7 +70,7 @@ fun CreatePost(navController: NavController) {
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Create Post",
+                title = t("Create Post"),
                 showBackButton = true,
             )
         },
@@ -89,7 +90,7 @@ fun CreatePost(navController: NavController) {
                 TextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title") },
+                    label = { t("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -99,7 +100,7 @@ fun CreatePost(navController: NavController) {
                 TextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") },
+                    label = { t("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -113,7 +114,7 @@ fun CreatePost(navController: NavController) {
                         imageBitmap = bitmap
                     }
                 }) {
-                    Text("Paste Image")
+                    t("Paste Image")
                 }
 
                 // If an image is pasted, show a preview
@@ -151,7 +152,7 @@ fun CreatePost(navController: NavController) {
                     },
                     modifier = Modifier.align(Alignment.End) // Align button to the right
                 ) {
-                    Text(text = "Submit Post")
+                    t("Submit Post")
                 }
 
 
@@ -240,7 +241,7 @@ fun TagSelectionMenu(
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 8.dp)
                     ) {
-                        Text("Done")
+                        t("Done")
                     }
                 }
             }

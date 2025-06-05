@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import art.example.ViewModel.FolderViewModel
 import art.example.navigation.MyTopAppBar
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -39,7 +40,7 @@ fun CreateFolder(navController: NavController) {
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Create Folder",
+                title = t("Create Folder"),
                 showBackButton = true,
                 onBackClicked = {
                     navController.popBackStack()
@@ -61,7 +62,7 @@ fun CreateFolder(navController: NavController) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title") },
+                    label = { t("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -71,7 +72,7 @@ fun CreateFolder(navController: NavController) {
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") },
+                    label = { t("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -85,7 +86,7 @@ fun CreateFolder(navController: NavController) {
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("Create")
+                    t("Create")
                 }
 
                 // Show loading indicator if needed

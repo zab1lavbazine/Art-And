@@ -24,6 +24,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import art.example.ViewModel.UserViewModel
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -49,8 +51,8 @@ fun RegisterScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Registration",
+            Translate(
+                keyName = "Registration",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
@@ -67,8 +69,8 @@ fun RegisterScreen(
                         value = email,
                         onValueChange = { email = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Email") },
-                        placeholder = { Text("Enter your email") },
+                        label = { t("Email") },
+                        placeholder = { t("Enter your email") },
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -77,8 +79,8 @@ fun RegisterScreen(
                         value = username,
                         onValueChange = { username = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Username") },
-                        placeholder = { Text("Enter your username") },
+                        label = { t("Username") },
+                        placeholder = { t("Enter your username") },
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -87,8 +89,8 @@ fun RegisterScreen(
                         value = password,
                         onValueChange = { password = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter your password") },
+                        label = { t("Password") },
+                        placeholder = { t("Enter your password") },
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true
                     )

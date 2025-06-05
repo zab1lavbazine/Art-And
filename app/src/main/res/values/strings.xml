@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">Art</string>
-    <string name="api_url">http://10.119.68.67:8082</string>
+    <string name="api_url">http://10.119.68.82:8082</string>
 </resources>

@@ -36,6 +36,8 @@ import art.example.modules.AnalyticsLogger
 import art.example.navigation.BottomNavigationBar
 import art.example.navigation.MyTopAppBar
 import art.example.navigation.postScreen.TagBox
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -57,7 +59,7 @@ fun UserDetailScreen(
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "User Details",
+                title = t("User Details"),
                 showMoreClickedButton = false,
                 showBackButton = true,
                 onBackClicked = { navController.popBackStack() },
@@ -105,7 +107,7 @@ fun UserProfileBox(user: SelectedUser?, isLoading: Boolean){
             user?.let { user ->
                 SelectedUserCard(user)
             } ?: run {
-                Text(text = "User not found", modifier = Modifier)
+                Translate(keyName = "User not found", modifier = Modifier)
             }
         }
     }

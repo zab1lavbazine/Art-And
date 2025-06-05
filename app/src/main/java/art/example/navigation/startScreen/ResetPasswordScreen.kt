@@ -26,6 +26,8 @@ import androidx.navigation.NavHostController
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.MyTopAppBar
 import art.example.screen.AuthScreens
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 import java.util.regex.Pattern
 
@@ -47,7 +49,7 @@ fun ResetPasswordScreen(
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Reset Password",
+                title = t("Reset Password"),
                 showBackButton = true,
             )
         }
@@ -60,8 +62,8 @@ fun ResetPasswordScreen(
             ,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Reset Password",
+            Translate(
+                keyName = "Reset Password",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -74,14 +76,14 @@ fun ResetPasswordScreen(
                     isEmailValid = isValidEmail(it.text)
                                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Email Address") },
-                placeholder = { Text("Enter your email") },
+                label = { t("Email Address") },
+                placeholder = { t("Enter your email") },
                 singleLine = true
             )
 
             if (!isEmailValid) {
-                Text(
-                    text = "Please enter a valid email address.",
+                Translate(
+                    keyName = "Please enter a valid email address.",
                     color = Color.Red,
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(vertical = 4.dp)

@@ -38,6 +38,7 @@ import art.example.screen.Screen
 import art.example.screen.UserScreens
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.analytics
+import cz.fit.cvut.sdk.components.TolgeeProvider
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +49,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyAppTheme {
-                MyApp()
+                TolgeeProvider {
+                    MyApp()
+                }
             }
         }
     }

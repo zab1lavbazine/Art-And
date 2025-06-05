@@ -12,6 +12,8 @@ import androidx.navigation.NavHostController
 import art.example.ViewModel.UserViewModel
 import art.example.navigation.MyTopAppBar
 import art.example.screen.AuthScreens
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -30,7 +32,7 @@ fun NewPasswordScreen(
 
     Scaffold(
         topBar = {
-            MyTopAppBar(title = "New Password")
+            MyTopAppBar(title = t("New Password"))
         },
     ) { paddingValues ->
         Column(
@@ -42,7 +44,7 @@ fun NewPasswordScreen(
         ) {
             // Title
             Text(
-                text = "Set a New Password",
+                text = t("Set a New Password"),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -51,8 +53,8 @@ fun NewPasswordScreen(
             TextField(
                 value = token,
                 onValueChange = { token = it },
-                label = { Text("Reset Token") },
-                placeholder = { Text("Enter your reset token") },
+                label = { t("Reset Token") },
+                placeholder = { t("Enter your reset token") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -66,8 +68,8 @@ fun NewPasswordScreen(
                     newPassword = it
                     isPasswordMatching = newPassword == confirmPassword // Update match status
                 },
-                label = { Text("New Password") },
-                placeholder = { Text("Enter your new password") },
+                label = { t("New Password") },
+                placeholder = { t("Enter your new password") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true
@@ -82,8 +84,8 @@ fun NewPasswordScreen(
                     confirmPassword = it
                     isPasswordMatching = newPassword == confirmPassword // Update match status
                 },
-                label = { Text("Confirm Password") },
-                placeholder = { Text("Re-enter your new password") },
+                label = { t("Confirm Password") },
+                placeholder = { t("Re-enter your new password") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
@@ -91,11 +93,11 @@ fun NewPasswordScreen(
             )
 
             if (!isPasswordMatching) {
-                Text(
-                    text = "Passwords do not match",
+                Translate(
+                    keyName = "Passwords do not match",
                     color = Color.Red,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
 

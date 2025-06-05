@@ -29,6 +29,7 @@ import art.example.ViewModel.UserViewModel
 import art.example.screen.AuthScreens
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "SuspiciousIndentation")
@@ -71,8 +72,8 @@ fun LoginScreen(
                 value = username,
                 onValueChange = { username = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Username") },
-                placeholder = { Text("Enter your username") },
+                label = { t("Username") },
+                placeholder = { t("Enter your username") },
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -80,8 +81,8 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password") },
-                placeholder = { Text("Enter your password") },
+                label = { t("Password") },
+                placeholder = { t("Enter your password") },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true
             )
@@ -118,7 +119,7 @@ fun LoginScreen(
                     contentColor = Color.White
                 )
             ){
-                Text("Reset password")
+                t("Reset password")
             }
         }
 }

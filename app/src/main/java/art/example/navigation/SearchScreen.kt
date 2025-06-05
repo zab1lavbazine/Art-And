@@ -21,6 +21,7 @@ import art.example.ViewModel.PostViewModel
 import art.example.navigation.postScreen.PostGrid
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -43,7 +44,7 @@ fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Search Posts",
+                title = t("Search Posts"),
                 showBackButton = true,
                 onBackClicked = { navController.popBackStack() },
                 showSearchButton = false,

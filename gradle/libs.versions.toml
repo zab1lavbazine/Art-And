@@ -9,6 +9,7 @@ coilCompose = "2.6.0"
 coilComposeVersion = "2.6.0"
 compiler = "4.12.0"
 converterMoshi = "2.9.0"
+datastorePreferences = "1.1.7"
 glide = "4.12.0"
 koinAndroid = "4.0.2"
 koinAndroidxCompose = "4.0.2"
@@ -45,6 +46,7 @@ roomKtx = "2.7.1"
 roomMigration = "2.7.1"
 roomRuntime = "2.7.1"
 runtimeLivedata = "1.7.4"
+tolgeesdk = "0.0.3"
 ui = "1.7.4"
 pagingCommonAndroid = "3.3.2"
 playServicesMeasurementApi = "22.4.0"
@@ -61,6 +63,7 @@ androidx-compose-ui-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-ui-ui2 = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout" }
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
@@ -117,6 +120,7 @@ kotlinx-serialization-json-v130 = { module = "org.jetbrains.kotlinx:kotlinx-seri
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+tolgeesdk = { module = "com.github.huglx:tolgeesdk", version.ref = "tolgeesdk" }
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }

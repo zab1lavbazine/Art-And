@@ -50,6 +50,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    tasks.register("printAuth") {
+        doLast {
+            println("Username: ${project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")}")
+            println("Token exists: ${(project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")) != null}")
+        }
+    }
 }
 
 dependencies {
@@ -84,6 +90,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+
+    implementation("io.insert-koin:koin-core:3.5.3")
+
 
     implementation(libs.lottie.compose)
 
@@ -153,9 +162,14 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx) // Room KTX library
     implementation(libs.androidx.room.migration) // Room migration library
+    ksp("androidx.room:room-compiler:2.6.1")
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.tolgeesdk)
 
 
 }

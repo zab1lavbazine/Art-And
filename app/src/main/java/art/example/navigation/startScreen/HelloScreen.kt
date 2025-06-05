@@ -19,6 +19,7 @@ import art.example.screen.AuthScreens
 import art.example.screen.MiscScreens
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 // Define the MainScreen composable
@@ -55,7 +56,7 @@ fun HelloScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Welcome to ArtHub",
+            text = t("Welcome to ArtHub"),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )
@@ -64,14 +65,14 @@ fun HelloScreen(navController: NavController) {
             onClick = { navController.navigate(AuthScreens.Login.route) },
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         ) {
-            Text("Go to Login Page")
+            t("Go to Login Page")
         }
 
         Button(
             onClick = { navController.navigate(AuthScreens.Register.route) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Go to Register Page")
+            t("Go to Register Page")
         }
     }
 }

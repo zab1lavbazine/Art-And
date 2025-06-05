@@ -45,6 +45,8 @@ import art.example.navigation.supportElements.MyModalBottomSheet
 import art.example.screen.MiscScreens
 import art.example.screen.PostScreens
 import art.example.screen.Screen
+import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -99,7 +101,7 @@ fun FolderDetailScreen(
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Detailed folder",
+                title = t("Detailed folder"),
                 showBackButton = true,
                 onSearchClicked = { navController.navigate(MiscScreens.SearchScreen.route) },
                 showMoreClickedButton = true,
@@ -172,7 +174,7 @@ fun FolderDetailScreen(
                         }
                     }
                 } ?: run {
-                    Text(text = "Folder not found.", style = MaterialTheme.typography.bodyLarge)
+                    Translate(keyName = "Folder not found.", style = MaterialTheme.typography.bodyLarge)
                 }
 
                 // Bottom sheet for additional options
@@ -197,8 +199,8 @@ fun FolderDetailScreen(
                                     .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(
-                                    text = "Update Folder",
+                                Translate(
+                                    keyName = "Update Folder",
                                     style = MaterialTheme.typography.titleLarge
                                 )
 
@@ -219,7 +221,7 @@ fun FolderDetailScreen(
                                 OutlinedTextField(
                                     value = folderDescription,
                                     onValueChange = { folderDescription = it },
-                                    label = { Text("Description") },
+                                    label = { t("Description") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 // show warning
@@ -260,7 +262,7 @@ fun FolderDetailScreen(
                                             }
                                         }
                                     ) {
-                                        Text("Submit")
+                                        t("Submit")
                                     }
                                 }
 

@@ -66,8 +66,7 @@ import art.example.navigation.GeneralMenuItem
 import art.example.navigation.supportElements.ResolvePostImage
 import art.example.screen.Screen
 import art.example.screen.UserScreens
-import cz.fit.cvut.feature.language.presentation.TolgeeLanguageDropdown
-import cz.fit.cvut.feature.translation.presentation.common.component.Translate
+import cz.fit.cvut.feature.translation.presentation.common.component.t
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -165,7 +164,7 @@ fun PostDetailScreen(
     Scaffold(
         topBar = {
             MyTopAppBar(
-                title = "Post details",
+                title = t("Post details"),
                 showBackButton = true,
                 onSearchClicked = { /* Handle search */ },
                 showMoreClickedButton = true,
@@ -272,23 +271,23 @@ fun CommentModal(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add a Comment") },
+        title = { t("Add a Comment") },
         text = {
             TextField(
                 value = newComment,
                 onValueChange = onCommentChange,
-                placeholder = { Text("Write your comment here") },
+                placeholder = { t("Write your comment here") },
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
             TextButton(onClick = onSubmit) {
-                Text("Submit")
+                t("Submit")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                t("Cancel")
             }
         }
     )
@@ -312,18 +311,18 @@ fun EditPostDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Post") },
+        title = { t("Edit Post") },
         text = {
             Column {
                 TextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title") }
+                    label = { t("Title") }
                 )
                 TextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") }
+                    label = { t("Description") }
                 )
 
                 TagSelectionMenu(
@@ -350,12 +349,12 @@ fun EditPostDialog(
                     }
                 }
             ) {
-                Text("Save")
+                t("Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                t("Cancel")
             }
         }
     )
