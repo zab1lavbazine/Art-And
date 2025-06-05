@@ -66,8 +66,6 @@ import art.example.navigation.GeneralMenuItem
 import art.example.navigation.supportElements.ResolvePostImage
 import art.example.screen.Screen
 import art.example.screen.UserScreens
-import cz.fit.cvut.feature.language.presentation.TolgeeLanguageDropdown
-import cz.fit.cvut.feature.translation.presentation.common.component.Translate
 
 import org.koin.androidx.compose.koinViewModel
 

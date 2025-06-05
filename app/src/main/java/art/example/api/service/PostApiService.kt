@@ -23,15 +23,15 @@ interface PostApiService {
 
     @GET("/api/recommendations/posts")
     suspend fun getPosts(
-        @retrofit2.http.Query("page") pageNumber: Int,
-        @retrofit2.http.Query("size") pageSize: Int,
+        @Query("page") pageNumber: Int,
+        @Query("size") pageSize: Int,
     ): ResponseItem<Post>
 
     @POST("/api/posts/search")
     suspend fun searchPosts(
-        @retrofit2.http.Query("keyword") query : String,
-        @retrofit2.http.Query("page") pageNumber: Int,
-        @retrofit2.http.Query("size") pageSize: Int,
+        @Query("keyword") query : String,
+        @Query("page") pageNumber: Int,
+        @Query("size") pageSize: Int,
     ) : ResponseItem<Post>
 
     @GET("/api/posts/{id}")
